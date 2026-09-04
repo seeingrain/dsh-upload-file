@@ -726,7 +726,7 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
 
   return React.createElement('span', { className: 'duf-paperclip-root', style: { position: 'relative', display: 'inline-flex' } },
     React.createElement('button', {
-      className: 'duf-paperclip', type: 'button', title: 'Workspace files',
+      className: 'duf-paperclip', type: 'button', title: '会话上传文件',
       'aria-expanded': open, onClick: openWin,
     },
       React.createElement('svg', {
@@ -746,9 +746,9 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
           onKeyDown: (e) => { if (e.key === 'Escape') { if (menu) closeMenu(); else closeWin() } },
           tabIndex: -1,
         },
-          React.createElement('div', { className: 'duf-lib', role: 'dialog', 'aria-label': 'Workspace files' },
+          React.createElement('div', { className: 'duf-lib', role: 'dialog', 'aria-label': '会话上传文件' },
             React.createElement('div', { className: 'duf-lib-header' },
-              React.createElement('span', { className: 'duf-lib-title' }, `Workspace files${totalFiles ? ` (${totalFiles})` : ''}`),
+              React.createElement('span', { className: 'duf-lib-title' }, `会话上传文件${totalFiles ? ` (${totalFiles})` : ''}`),
               React.createElement('button', {
                 className: 'duf-lib-upload', type: 'button', title: 'Upload files',
                 onClick: () => fileInputRef.current?.click(),
