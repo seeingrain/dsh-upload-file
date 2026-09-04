@@ -54,6 +54,10 @@ div:has(+ div[data-slot="conversation.input.left"]){order:2}
 .duf-lib-table{width:100%;border-collapse:collapse;font-size:13px}
 .duf-lib-table td{padding:7px 10px;border-bottom:1px solid rgba(17,17,17,.06);vertical-align:middle}
 .duf-lib-table tr:last-child td{border-bottom:none}
+.duf-col-icon{width:64px}
+.duf-col-size{width:72px}
+.duf-col-act{width:140px}
+.duf-col-prog{width:132px}
 .duf-lib-icon{display:inline-flex;align-items:center;justify-content:center;width:44px;height:36px;border-radius:6px;overflow:hidden;background:rgba(17,17,17,.05);flex:none}
 .duf-lib-icon img,.duf-lib-icon video{width:100%;height:100%;object-fit:cover;display:block;background:rgba(17,17,17,.05)}
 .duf-lib-name{display:block;font-weight:520;white-space:nowrap;overflow:hidden}
@@ -68,6 +72,21 @@ div:has(+ div[data-slot="conversation.input.left"]){order:2}
 .duf-lib-progress{flex:1;max-width:110px;height:6px;border-radius:3px;background:rgba(17,17,17,.10);overflow:hidden;display:inline-block}
 .duf-lib-progress i{display:block;height:100%;background:#4f7cff;border-radius:3px}
 .duf-lib-prog-pct{font-size:11px;color:rgba(17,17,17,.5);min-width:34px;text-align:right;font-variant-numeric:tabular-nums}
+/* 窄屏（手机）：收窄固定列 + 缩按钮/图标，把空间还给文件名列。
+   必须放在所有基础样式之后（同优先级，后者胜出） */
+@media (max-width:640px){
+.duf-col-icon{width:48px}
+.duf-col-size{width:64px}
+.duf-col-act{width:112px}
+.duf-col-prog{width:100px}
+.duf-lib-table td{padding:7px 6px}
+.duf-lib-icon{width:34px;height:28px}
+.duf-lib-size{font-size:11px}
+.duf-lib-btn{padding:3px 6px;font-size:11px}
+.duf-lib-actions{gap:4px}
+.duf-lib-progress{max-width:46px}
+.duf-lib-progress-row{gap:6px}
+}
 `
 
 function ensureStyles() {
@@ -571,10 +590,10 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
               activeDrafts.length > 0
                 ? React.createElement('table', { className: 'duf-lib-table', style: { tableLayout: 'fixed' } },
                     React.createElement('colgroup', null,
-                      React.createElement('col', { style: { width: 64 } }),
+                      React.createElement('col', { className: 'duf-col-icon' }),
                       React.createElement('col'),
-                      React.createElement('col', { style: { width: 72 } }),
-                      React.createElement('col', { style: { width: 132 } })),
+                      React.createElement('col', { className: 'duf-col-size' }),
+                      React.createElement('col', { className: 'duf-col-prog' })),
                     React.createElement('tbody', null,
                       activeDrafts.map((d) => React.createElement('tr', { key: d.id },
                         React.createElement('td', null, React.createElement('span', { className: 'duf-lib-icon' }, React.createElement(FileBadge, { name: d.displayName, small: true }))),
@@ -600,10 +619,10 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
                   : attachments.length > 0
                     ? React.createElement('table', { className: 'duf-lib-table', style: { tableLayout: 'fixed' } },
                         React.createElement('colgroup', null,
-                          React.createElement('col', { style: { width: 64 } }),
+                          React.createElement('col', { className: 'duf-col-icon' }),
                           React.createElement('col'),
-                          React.createElement('col', { style: { width: 72 } }),
-                          React.createElement('col', { style: { width: 140 } })),
+                          React.createElement('col', { className: 'duf-col-size' }),
+                          React.createElement('col', { className: 'duf-col-act' })),
                         React.createElement('tbody', null,
                           attachments.map((entry) => React.createElement('tr', { key: entry.name },
                             React.createElement('td', null, React.createElement('span', { className: 'duf-lib-icon' }, iconFor(entry))),

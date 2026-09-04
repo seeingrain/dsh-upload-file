@@ -4,6 +4,14 @@ All notable changes to dsh-upload-file are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-09-05
+
+### Fixed
+- Responsive column widths: on narrow (phone) viewports the fixed columns
+  (icon / size / actions) and the row buttons shrink via a `max-width:640px`
+  media query, returning the space to the file-name column — names are no
+  longer truncated to a few characters on phones.
+
 ## [0.1.0] - 2026-09-04
 
 ### Added
