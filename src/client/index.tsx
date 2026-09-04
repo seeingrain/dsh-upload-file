@@ -57,10 +57,11 @@ div:has(+ div[data-slot="conversation.input.left"]){order:2}
 .duf-col-icon{width:64px}
 .duf-col-size{width:72px}
 .duf-col-prog{width:132px}
-/* -webkit-touch-callout 不继承：必须压到含文字的后代元素上（整表），
+/* -webkit-touch-callout / user-select 不继承：必须压到含文字的后代元素上，
+   范围覆盖整个弹层（窗口 + 行菜单 + toast），
    否则手机长按仍会弹系统「选择文字/复制/粘贴」浮层 */
 .duf-lib-row{cursor:default}
-.duf-lib-table,.duf-lib-table *{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+.duf-lib-overlay,.duf-lib-overlay *{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
 .duf-lib-row:hover{background:rgba(17,17,17,.03)}
 .duf-lib-icon{display:inline-flex;align-items:center;justify-content:center;width:44px;height:36px;border-radius:6px;overflow:hidden;background:rgba(17,17,17,.05);flex:none}
 .duf-lib-icon img,.duf-lib-icon video{width:100%;height:100%;object-fit:cover;display:block;background:rgba(17,17,17,.05)}
@@ -584,11 +585,11 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
   const api = useMemo(() => new UploadApi(), [])
   const fileInputRef = useRef(null)
   const overlayRef = useRef(null)
-  const scrollRef = useRef(null)
   // 阻止浏览器原生文字选择浮层（手机长按「选择/复制/粘贴」）。
-  // React 合成 onSelectStart 在此不触发，改用原生监听（selectstart 冒泡到容器即可拦截）。
+  // React 合成 onSelectStart 在此不触发，改用原生监听：
+  // 挂在弹层根上，覆盖窗口 + 行菜单 + toast 里所有文字。
   useEffect(() => {
-    const el = scrollRef.current
+    const el = overlayRef.current
     if (!el) return
     const block = (e) => e.preventDefault()
     el.addEventListener('selectstart', block)
@@ -763,7 +764,7 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
                 onClick: closeWin,
               }, '✕'),
             ),
-            React.createElement('div', { className: 'duf-lib-scroll', ref: scrollRef },
+            React.createElement('div', { className: 'duf-lib-scroll' },
               activeDrafts.length > 0
                 ? React.createElement('table', { className: 'duf-lib-table', style: { tableLayout: 'fixed' } },
                     React.createElement('colgroup', null,
