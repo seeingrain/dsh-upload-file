@@ -1,0 +1,7 @@
+# dsh-upload-file bundle patch: mount the plugin row.
+# Host half: upload routes + per-session registry + workspace landing.
+# Client half: paperclip dock in the composer tool row.
+- insert:
+    - id: upload-file
+      name: 'dsh-upload-file'
+      config: {}

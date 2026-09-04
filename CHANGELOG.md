@@ -1,0 +1,21 @@
+# Changelog
+
+All notable changes to dsh-upload-file are documented here.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.1.0] - 2026-09-04
+
+### Added
+- Paperclip file-library button in the composer toolbar (per-session file count badge).
+- Library window: multi-file upload with per-file progress draft (cancel / retry / remove),
+  type icons with live image/video thumbnails, name + absolute path + size.
+- Per-row actions: `@` insert reference, `↗` open via DSH `workspaces.openPath` funnel
+  (Better Sidebar editor when installed, system default app otherwise), `🗑️` delete
+  (browser-native confirm).
+- Uploads land in `<workspace>/uploaded_files/<sessionId>/` — per-session isolation,
+  filename is the sole identity (re-upload dedup with `_1`/`_2` suffixes).
+- `@UPLOAD: <file>` references in the composer and in past messages (re-rendered as
+  interactive action rows).
+- System-prompt context injection of the session's upload directory (only when non-empty).
+- SHA-256 verification of every upload (client-side digest, server-side commit check).

@@ -1,0 +1,70 @@
+# dsh-upload-file
+
+[![CI](https://git.6.seeingrain.fun:6443/dsh/dsh-upload-file/actions/workflows/ci.yml/badge.svg)](https://git.6.seeingrain.fun:6443/dsh/dsh-upload-file/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+> 🇬🇧 English: [README.en.md](README.en.md)
+
+给 DSH Web 聊天加一个 **📎 文件库**：把文件传进当前会话的私有目录，一行一个动作——**@  引用给模型、↗ 直接打开、🗑️ 删掉**。模型不用你再报路径，上传完自动在输入框插好 `@UPLOAD:` 引用；每个会话的文件互相隔离，重传同名文件自动加后缀，不会互相覆盖。
+
+| 文件库窗口（上传 / 列表 / 行内动作） | 输入区入口（加号旁的回形针） |
+| :---: | :---: |
+| ![文件库窗口](https://git.6.seeingrain.fun:6443/dsh/dsh-upload-file/media/branch/main/assets/preview-1-library.png) | ![输入区回形针入口](https://git.6.seeingrain.fun:6443/dsh/dsh-upload-file/media/branch/main/assets/preview-2-composer.png) |
+
+## 功能
+
+- 输入区工具行（加号旁）新增 **📎 文件库** 按钮，带角标显示本会话文件数
+- 点开弹层：
+  - **上传新文件**：文件选择器，支持一次多选
+  - 文件列表：类型图标（图片/视频实时缩略图）+ 文件名 + 绝对路径 + 大小
+  - 每行三个动作：**@** 插入引用 / **↗** 打开 / **🗑️** 删除
+- **@**：在输入框插入 `@UPLOAD: 文件名`（上传完成后自动插入）
+- **↗**：走 DSH 统一 `workspaces.openPath` 漏斗——装了 Better Sidebar 就进侧栏编辑器打开，没装/禁用则回退 xdg-open 系统默认程序
+- **🗑️**：浏览器原生二次确认后直接删除磁盘文件（无回收站，慎用）
+- 上传中草稿卡（进度 / 取消 / 重试 / 移除）
+- 历史消息里的上传操作渲染成可操作的工具行（同样的三个按钮）
+
+## 存储（文件系统即注册表，无 JSON 索引）
+
+- 每个会话一个子目录：`<会话工作区>/uploaded_files/<sessionId>/`
+- **文件名就是唯一身份**（无 displayName 间接层）；同会话重传同名文件自动加 `_1`/`_2` 数字后缀，`@UPLOAD:` 引用名 = 目录内实际文件名
+- 会话间完全隔离：同名文件在不同会话目录互不冲突
+- 列表 = `readdir` + `stat`（按 mtime 升序，最新在底部）
+- system prompt 按会话注入指向本会话目录的约定文本（目录为空时不注入）
+
+## 安全
+
+- 上传全程 SHA-256 校验（客户端摘要 → 提交时服务端比对）
+- 所有文件路径操作做目录穿越防护（`normalize(join())` 必须仍在本会话目录内）
+- `sessionId` 严格校验（UUID 格式），工作区从会话自身 `header.cwd` 解析，不信任客户端传入的路径
+
+## HTTP 接口（前缀 /dsh-upload-file/v1）
+
+- `POST /uploads/prepare` `{sessionId, name, size}` → `{uploadId, putUrl, commitUrl, deleteUrl}`
+- `PUT /uploads/<id>` 流式上传（application/octet-stream，inline sha256）
+- `POST /uploads/<id>/commit` `{expectedSha256}` → `{name, displayName, absolutePath, size, createdAt}`
+- `DELETE /uploads/<id>` 取消（已 commit 的 id 返回 404，客户端吞掉）
+- `GET /sessions/<sessionId>/attachments` 目录列表
+- `GET /attachments/content?sessionId&name` 下载 / 打开（防路径穿越）
+- `DELETE /sessions/<sessionId>/attachments?name=` 删除已提交文件
+
+## 构建
+
+```bash
+pnpm install
+pnpm run build
+```
+
+## 安装
+
+```sh
+dsh plugin --profile web add https://git.6.seeingrain.fun:6443/dsh/dsh-upload-file
+# host 半边需要重启 web；client 半边下次刷新页面即加载
+```
+
+本地开发链接方式：在 `profiles/web/package.json` 的 dependencies 里加
+`"dsh-upload-file": "link:<本仓库路径>"`，并在 bundles 列表追加 `dsh-upload-file`，然后 `pnpm install`。
+
+## License
+
+MIT — 见 [LICENSE](LICENSE)。
