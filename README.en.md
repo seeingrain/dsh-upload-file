@@ -29,7 +29,7 @@ Adds a **📎 file library** to DSH Web chat: upload files into the current sess
 - One subdirectory per session: `<workspace>/uploaded_files/<sessionId>/`
 - **The filename is the identity** (no displayName indirection); re-uploading the same name in one session gets an auto `_1`/`_2` suffix, and the `@UPLOAD:` reference always equals the actual file name on disk
 - Sessions are fully isolated: the same name in different sessions never conflicts
-- Listing = `readdir` + `stat` (sorted by mtime, newest at the bottom)
+- Listing = `readdir` + `stat` (sorted by mtime descending — newest upload on top)
 - The system prompt injects the session's upload-directory convention per session (skipped when the directory is empty)
 
 ## Security

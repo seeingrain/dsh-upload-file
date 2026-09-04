@@ -295,7 +295,8 @@ export function apply(context) {
           })
         } catch { /* vanished mid-listing */ }
       }
-      attachments.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+      // mtime 降序：新上传的文件在最顶上
+      attachments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       return writeJson(res, 200, { attachments })
     }
 

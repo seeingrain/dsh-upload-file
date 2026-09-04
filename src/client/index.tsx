@@ -499,9 +499,8 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
 
   const refresh = useCallback(async () => {
     try {
-      const list = await api.list(sessionId)
-      list.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-      setAttachments(list)
+      // 服务端已按 mtime 降序（最新上传置顶），客户端不再重排
+      setAttachments(await api.list(sessionId))
     } catch {
       setAttachments([])
     }
