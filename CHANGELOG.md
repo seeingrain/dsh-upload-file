@@ -4,6 +4,14 @@ All notable changes to dsh-upload-file are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 2026-09-05
+
+### Changed
+- Removed the absolute-path sub-line from file rows.
+- File names now wrap to at most two lines (CSS `-webkit-line-clamp:2`)
+  instead of a single middle-ellipsis line; the full path remains
+  available via the "Copy full path" menu action.
+
 ## [0.2.2] - 2026-09-05
 
 ### Fixed

@@ -65,7 +65,8 @@ div:has(+ div[data-slot="conversation.input.left"]){order:2}
 .duf-lib-row:hover{background:rgba(17,17,17,.03)}
 .duf-lib-icon{display:inline-flex;align-items:center;justify-content:center;width:44px;height:36px;border-radius:6px;overflow:hidden;background:rgba(17,17,17,.05);flex:none}
 .duf-lib-icon img,.duf-lib-icon video{width:100%;height:100%;object-fit:cover;display:block;background:rgba(17,17,17,.05)}
-.duf-lib-name{display:block;font-weight:520;white-space:nowrap;overflow:hidden}
+/* 文件名最多两行，超出省略（路径行已移除，两行空间归文件名） */
+.duf-lib-name{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-weight:520;white-space:normal;word-break:break-word;overflow:hidden}
 .duf-lib-name-sub{display:block;color:rgba(17,17,17,.42);font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden}
 .duf-lib-size{color:rgba(17,17,17,.5);white-space:nowrap;font-variant-numeric:tabular-nums}
 /* 行右键 / 触摸长按弹出的操作菜单 */
@@ -118,13 +119,6 @@ function formatSize(bytes) {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
-}
-
-/* 单行显示：过长时隐去中间部分（保留头部与尾部，尾部含扩展名） */
-function middleEllipsis(str, head, tail) {
-  const s = String(str ?? '')
-  if (s.length <= head + tail + 3) return s
-  return `${s.slice(0, head)}...${s.slice(-tail)}`
 }
 
 /* 用系统默认应用打开文件（DSH 通用接口 host.openPath → xdg-open） */
@@ -776,7 +770,7 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
                       activeDrafts.map((d) => React.createElement('tr', { key: d.id },
                         React.createElement('td', null, React.createElement('span', { className: 'duf-lib-icon' }, React.createElement(FileBadge, { name: d.displayName, small: true }))),
                         React.createElement('td', null,
-                          React.createElement('span', { className: 'duf-lib-name', title: d.displayName }, middleEllipsis(d.displayName, 14, 26)),
+                          React.createElement('span', { className: 'duf-lib-name', title: d.displayName }, d.displayName),
                           React.createElement('span', { className: 'duf-lib-name-sub' },
                             d.state === 'uploading' ? `Uploading ${Math.round(d.progress * 100)}%` : d.state === 'failed' ? (d.errorCode ?? 'Failed') : 'Waiting'),
                         ),
@@ -813,8 +807,7 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
                           },
                             React.createElement('td', null, React.createElement('span', { className: 'duf-lib-icon' }, iconFor(entry))),
                             React.createElement('td', null,
-                              React.createElement('span', { className: 'duf-lib-name', title: entry.displayName }, middleEllipsis(entry.displayName, 14, 26)),
-                              React.createElement('span', { className: 'duf-lib-name-sub', title: entry.absolutePath }, middleEllipsis(entry.absolutePath, 10, 36))),
+                              React.createElement('span', { className: 'duf-lib-name', title: entry.displayName }, entry.displayName)),
                             React.createElement('td', { className: 'duf-lib-size' }, formatSize(entry.size)),
                           )),
                         ),
