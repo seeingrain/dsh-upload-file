@@ -4,6 +4,21 @@ All notable changes to dsh-upload-file are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.7] - 2026-09-05
+
+### Added
+- Files uploaded while the window is open get a light-green row
+  background so they stand out; the highlight resets when the window
+  closes.
+
+### Fixed
+- Video thumbnails were blank on phones/tablets: mobile browsers do not
+  decode frames of detached (off-DOM) video elements, so the canvas
+  capture drew a transparent frame. The capture video is now attached
+  to the DOM (offscreen, muted, playsinline) and briefly played
+  (muted autoplay) to force a frame to decode; blank-frame detection
+  keeps the `<video>` fallback instead of showing a white image.
+
 ## [0.2.6] - 2026-09-05
 
 ### Added

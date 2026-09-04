@@ -64,6 +64,9 @@ div:has(+ div[data-slot="conversation.input.left"]){order:2}
 .duf-lib-row{cursor:default}
 .duf-lib-overlay,.duf-lib-overlay *{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
 .duf-lib-row:hover{background:rgba(17,17,17,.03)}
+/* 本次开窗期间新上传的文件：浅绿底，关窗恢复 */
+.duf-lib-row.duf-lib-new{background:#e6f4ea}
+.duf-lib-row.duf-lib-new:hover{background:#d7ebd9}
 .duf-lib-icon{display:inline-flex;align-items:center;justify-content:center;width:44px;height:36px;border-radius:6px;overflow:hidden;background:rgba(17,17,17,.05);flex:none}
 .duf-lib-icon img,.duf-lib-icon video{width:100%;height:100%;object-fit:cover;display:block;background:rgba(17,17,17,.05)}
 /* 文件名最多两行，超出省略（路径行已移除，两行空间归文件名） */
@@ -169,11 +172,29 @@ function VideoThumb({ src, alt }) {
   const [poster, setPoster] = useState('')
   useEffect(() => {
     let cancelled = false
+    let timer = null
+    let onFrame = () => {}
     const v = document.createElement('video')
-    v.preload = 'metadata'
+    v.preload = 'auto'
     v.muted = true
     v.playsInline = true
+    // 必须挂在 DOM 里：移动端（iOS/Android）对脱离文档的 video 不解码帧，
+    // canvas 只能抓到透明帧 → 缩略图空白（PC 无此限制）。
+    v.style.cssText = 'position:fixed;left:-10000px;top:0;width:160px;height:96px;opacity:0;pointer-events:none'
+    document.body.appendChild(v)
     v.src = src
+    const finish = () => {
+      cancelled = true
+      if (timer) clearTimeout(timer)
+      v.onloadedmetadata = null
+      v.onseeked = null
+      v.onerror = null
+      v.removeEventListener('timeupdate', onFrame)
+      try { v.pause() } catch { /* ignore */ }
+      v.removeAttribute('src')
+      v.load()
+      if (v.parentNode) v.parentNode.removeChild(v)
+    }
     const draw = () => {
       if (cancelled || v.videoWidth === 0) return
       try {
@@ -186,22 +207,34 @@ function VideoThumb({ src, alt }) {
         const sw = W / scale, sh = H / scale
         const sx = (v.videoWidth - sw) / 2, sy = (v.videoHeight - sh) / 2
         ctx.drawImage(v, sx, sy, sw, sh, 0, 0, W, H)
+        // 透明帧 = 未解码（移动端）：不设 poster，保留 <video> 兜底，避免白图
+        const px = ctx.getImageData(W >> 1, H >> 1, 1, 1).data
+        if (px[3] === 0) return
         setPoster(c.toDataURL('image/jpeg', 0.72))
+        finish()
       } catch { /* ignore */ }
     }
     v.onloadedmetadata = () => {
-      try { v.currentTime = Math.min(0.1, (v.duration || 1) * 0.05) } catch { draw() }
+      try { v.currentTime = Math.min(0.1, (v.duration || 1) * 0.05) } catch { /* ignore */ }
     }
-    v.onseeked = draw
-    v.onerror = () => { v.onloadedmetadata = null; v.onseeked = null }
-    return () => {
-      cancelled = true
-      v.onloadedmetadata = null
-      v.onseeked = null
-      v.onerror = null
-      v.removeAttribute('src')
-      v.load()
+    v.onseeked = () => {
+      draw()
+      if (cancelled) return // 已抓到帧（桌面快路径），无需播放
+      // 移动端 muted+playsinline 允许自动播放：播一下强制解码出帧，再抓
+      const t = v.currentTime
+      onFrame = () => {
+        if (v.currentTime >= t - 0.05) {
+          v.removeEventListener('timeupdate', onFrame)
+          draw()
+        }
+      }
+      v.addEventListener('timeupdate', onFrame)
+      timer = setTimeout(() => { draw(); finish() }, 800)
+      const p = v.play()
+      if (p) p.catch(() => { /* 播放被拒：800ms 定时器兜底 */ })
     }
+    v.onerror = () => { /* 保持 <video> 兜底 */ }
+    return finish
   }, [src])
   if (poster) return React.createElement('img', { src: poster, alt, style: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' } })
   return React.createElement('video', { src, preload: 'metadata', muted: true, playsInline: true, 'aria-label': alt })
@@ -577,6 +610,9 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
   const [open, setOpen] = useState(false)
   const [attachments, setAttachments] = useState(null)
   const [version, setVersion] = useState(0)
+  // 本次开窗期间新上传的文件：浅绿底色，一眼可辨；关窗即恢复
+  const [newNames, setNewNames] = useState(() => new Set())
+  const knownRef = useRef(null) // 开窗时快照已有文件；此后出现的新名字 = 新上传
   const api = useMemo(() => new UploadApi(), [])
   const fileInputRef = useRef(null)
   const overlayRef = useRef(null)
@@ -605,13 +641,35 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
   const refresh = useCallback(async () => {
     try {
       // 服务端已按 mtime 降序（最新上传置顶），客户端不再重排
-      setAttachments(await api.list(sessionId))
+      const list = await api.list(sessionId)
+      if (knownRef.current === null) {
+        knownRef.current = new Set(list.map((f) => f.name)) // 首次开窗：快照，不标新
+      } else {
+        const fresh = list.filter((f) => !knownRef.current.has(f.name))
+        if (fresh.length > 0) {
+          for (const f of fresh) knownRef.current.add(f.name)
+          setNewNames((s) => {
+            const n = new Set(s)
+            for (const f of fresh) n.add(f.name)
+            return n
+          })
+        }
+      }
+      setAttachments(list)
     } catch {
       setAttachments([])
     }
   }, [api, sessionId])
 
   useEffect(() => { void refresh() }, [refresh, version, open])
+
+  // 关窗：高亮与快照一起清掉，下次重开重新基线
+  useEffect(() => {
+    if (!open) {
+      knownRef.current = null
+      setNewNames(new Set())
+    }
+  }, [open])
 
   // 上传完成（ready）后：自动往 composer 插 @UPLOAD 标记 + 刷新列表 + 清理 ready 的 draft
   const autoRef = useRef(new Set())
@@ -823,7 +881,7 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
                         React.createElement('tbody', null,
                           attachments.map((entry) => React.createElement('tr', {
                             key: entry.name,
-                            className: 'duf-lib-row',
+                            className: 'duf-lib-row' + (newNames.has(entry.name) ? ' duf-lib-new' : ''),
                             onContextMenu: (e) => rowContext(e, entry),
                             onPointerDown: (e) => startPress(e, entry),
                             onPointerMove: movePress,
