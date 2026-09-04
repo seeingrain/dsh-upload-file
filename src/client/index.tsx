@@ -47,7 +47,8 @@ div:has(+ div[data-slot="conversation.input.left"]){order:2}
 .duf-lib-title{font-size:14px;font-weight:650;min-width:0}
 .duf-lib-close{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;flex:none;border:none;background:transparent;border-radius:7px;color:rgba(17,17,17,.55);font-size:15px;cursor:pointer}
 .duf-lib-close:hover{background:rgba(17,17,17,.08);color:#111}
-.duf-lib-upload{display:inline-flex;align-items:center;justify-content:center;gap:8px;flex:1;min-width:0;max-width:440px;height:30px;border:1px solid #111;background:#111;color:#fff;border-radius:8px;padding:0 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+/* 内容宽度（不再 flex 拉伸），margin-left:auto 靠右挨着 ✕ */
+.duf-lib-upload{display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-left:auto;height:30px;border:1px solid #111;background:#111;color:#fff;border-radius:8px;padding:0 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
 .duf-lib-upload:hover{background:#333}
 .duf-lib-scroll{overflow:auto;padding:2px 6px 10px;min-height:40px}
 .duf-lib-empty{padding:28px 16px;text-align:center;color:rgba(17,17,17,.45);font-size:13px}
