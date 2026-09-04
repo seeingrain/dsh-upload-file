@@ -631,8 +631,33 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
     for (const d of done) void queue.remove(sessionId, d.id)
   }, [drafts, open, refresh, queue, sessionId, liveDraft, inputActions])
 
-  const openWin = useCallback(() => { setAttachments(null); setOpen(true) }, [])
-  const closeWin = useCallback(() => { setOpen(false) }, [])
+  // 移动端 back 事件（硬件返回键 / 浏览器后退 / 侧滑）关闭本窗口：
+  // 开窗口时压一条 history entry；popstate 命中该 entry → 关窗口。
+  // 用 ✕/Esc 关闭时主动 history.back() 吃掉自己的 entry，不留孤儿项。
+  const histRef = useRef(false)
+  const openWin = useCallback(() => {
+    setAttachments(null)
+    setOpen(true)
+    histRef.current = true
+    history.pushState({ dufLib: true }, '')
+  }, [])
+  const closeWin = useCallback(() => {
+    setOpen(false)
+    if (histRef.current) {
+      histRef.current = false
+      history.back()
+    }
+  }, [])
+  useEffect(() => {
+    const onPop = () => {
+      if (histRef.current) {
+        histRef.current = false
+        setOpen(false)
+      }
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
 
   const onPickFiles = useCallback((files) => {
     queue.enqueue(sessionId, files)

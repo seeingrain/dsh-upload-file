@@ -4,6 +4,16 @@ All notable changes to dsh-upload-file are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6] - 2026-09-05
+
+### Added
+- Mobile back button (hardware back / browser back / swipe) now closes
+  the library window first: opening the window pushes one history
+  entry; a `popstate` on that entry closes the window. Closing via ✕
+  or Esc consumes the entry programmatically, leaving no orphan.
+  Composes with dsh-back-guard (our entry sits above the guard
+  sentinel, so back closes the window before the guard re-arms).
+
 ## [0.2.5] - 2026-09-05
 
 ### Changed
