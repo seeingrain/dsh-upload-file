@@ -16,13 +16,15 @@ Adds a **📎 file library** to DSH Web chat: upload files into the current sess
 - **📎 File library** button in the composer toolbar (next to the plus button), with a badge showing this session's file count
 - Library window:
   - **Upload**: file picker, multi-select in one go
-  - List: type icon (live thumbnails for images/video) + name + absolute path + size
-  - Three actions per row: **@** insert reference / **↗** open / **🗑️** delete
-- **@**: inserts `@UPLOAD: <file>` into the composer (auto-inserted after upload completes)
-- **↗**: goes through DSH's unified `workspaces.openPath` funnel — Better Sidebar editor when installed, otherwise falls back to `xdg-open` (system default app)
-- **🗑️**: deletes the file on disk after a native browser confirm (no recycle bin — use with care)
-- Upload drafts while in flight (progress / cancel / retry / remove)
-- Upload actions in past messages re-render as interactive tool rows (same three buttons)
+  - List: type icon (live thumbnails for images/video) + name + absolute path + size, newest upload on top
+  - Row actions: **right-click** a row on desktop / **long-press** on touch to open the action menu
+- Action menu (5 items):
+  - **@ Mention**: inserts `@UPLOAD: <file>` into the composer (auto-inserted after upload completes)
+  - **↗ Open**: goes through DSH's unified `workspaces.openPath` funnel — Better Sidebar editor when installed, otherwise falls back to `xdg-open` (system default app)
+  - **📄 Copy name** / **📁 Copy full path**: to the clipboard
+  - **🗑️ Delete**: removes the file on disk after a native browser confirm (no recycle bin — use with care)
+- Every successful action shows a **toast** (red toast on failure)
+- Upload drafts while in flight (progress bar + percent)
 
 ## Storage (filesystem as registry, no JSON index)
 

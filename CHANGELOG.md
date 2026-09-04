@@ -4,6 +4,19 @@ All notable changes to dsh-upload-file are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-09-05
+
+### Changed
+- Replaced the three inline row buttons with a context menu: right-click
+  (desktop) or long-press (touch) on a file row opens a menu with
+  Mention / Open / Copy name / Copy full path / Delete.
+- Dropped the actions column — the file-name column gets the space back.
+
+### Added
+- Copy filename / copy full path actions (async Clipboard API with
+  `execCommand` fallback).
+- Toast feedback for every action (red toast on failure).
+
 ## [0.1.2] - 2026-09-05
 
 ### Changed

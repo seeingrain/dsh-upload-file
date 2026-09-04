@@ -14,7 +14,7 @@
  * sent message as appended markdown links. Historical messages project those
  * links back into clickable attachment cards.
  */
-import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 
 /* ------------------------------------------------------------------ */
 /* constants                                                           */
@@ -56,18 +56,29 @@ div:has(+ div[data-slot="conversation.input.left"]){order:2}
 .duf-lib-table tr:last-child td{border-bottom:none}
 .duf-col-icon{width:64px}
 .duf-col-size{width:72px}
-.duf-col-act{width:140px}
 .duf-col-prog{width:132px}
+.duf-lib-row{cursor:default;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+.duf-lib-row:hover{background:rgba(17,17,17,.03)}
 .duf-lib-icon{display:inline-flex;align-items:center;justify-content:center;width:44px;height:36px;border-radius:6px;overflow:hidden;background:rgba(17,17,17,.05);flex:none}
 .duf-lib-icon img,.duf-lib-icon video{width:100%;height:100%;object-fit:cover;display:block;background:rgba(17,17,17,.05)}
 .duf-lib-name{display:block;font-weight:520;white-space:nowrap;overflow:hidden}
 .duf-lib-name-sub{display:block;color:rgba(17,17,17,.42);font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden}
 .duf-lib-size{color:rgba(17,17,17,.5);white-space:nowrap;font-variant-numeric:tabular-nums}
-.duf-lib-actions{display:flex;gap:6px;justify-content:flex-end;align-items:center}
-.duf-lib-btn{border:1px solid rgba(17,17,17,.16);background:#fff;border-radius:6px;padding:4px 9px;font-size:12px;cursor:pointer;line-height:1.1;font-family:inherit}
-.duf-lib-btn:hover{background:rgba(17,17,17,.06)}
-.duf-lib-btn.duf-lib-btn-danger{color:#c2410c;border-color:rgba(194,65,12,.32)}
-.duf-lib-btn.duf-lib-btn-danger:hover{background:rgba(194,65,12,.08)}
+/* 行右键 / 触摸长按弹出的操作菜单 */
+.duf-menu-backdrop{position:fixed;inset:0;z-index:2147483010}
+.duf-menu{position:fixed;z-index:2147483011;min-width:180px;padding:6px;background:#fff;border:1px solid rgba(17,17,17,.14);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.24);display:flex;flex-direction:column;gap:2px}
+.duf-menu-item{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:0;background:transparent;border-radius:7px;font-size:13px;font-family:inherit;color:#111;cursor:pointer;text-align:left;white-space:nowrap}
+.duf-menu-item:hover{background:rgba(17,17,17,.06)}
+.duf-menu-ico{width:18px;text-align:center;font-size:14px;flex:none}
+.duf-menu-item.duf-menu-danger{color:#c2410c}
+.duf-menu-item.duf-menu-danger:hover{background:rgba(194,65,12,.08)}
+.duf-menu-sep{height:1px;margin:4px 6px;background:rgba(17,17,17,.09)}
+.duf-menu-title{padding:2px 10px 6px;font-size:11px;color:rgba(17,17,17,.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px}
+/* toast（操作成功/失败反馈） */
+.duf-toast-host{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2147483020;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+.duf-toast{background:#111;color:#fff;font-size:13px;line-height:1.4;padding:9px 16px;border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,.30);max-width:80vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:duf-toast-in .18s ease-out}
+.duf-toast-err{background:#b3261e}
+@keyframes duf-toast-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .duf-lib-progress-row{display:flex;align-items:center;gap:8px}
 .duf-lib-progress{flex:1;max-width:110px;height:6px;border-radius:3px;background:rgba(17,17,17,.10);overflow:hidden;display:inline-block}
 .duf-lib-progress i{display:block;height:100%;background:#4f7cff;border-radius:3px}
@@ -77,13 +88,10 @@ div:has(+ div[data-slot="conversation.input.left"]){order:2}
 @media (max-width:640px){
 .duf-col-icon{width:48px}
 .duf-col-size{width:64px}
-.duf-col-act{width:112px}
 .duf-col-prog{width:100px}
 .duf-lib-table td{padding:7px 6px}
 .duf-lib-icon{width:34px;height:28px}
 .duf-lib-size{font-size:11px}
-.duf-lib-btn{padding:3px 6px;font-size:11px}
-.duf-lib-actions{gap:4px}
 .duf-lib-progress{max-width:46px}
 .duf-lib-progress-row{gap:6px}
 }
@@ -474,6 +482,94 @@ class AttachmentQueue {
 }
 
 /* ------------------------------------------------------------------ */
+/* toasts（模块级 store + 单例宿主，操作成功/失败反馈）                    */
+/* ------------------------------------------------------------------ */
+
+const toastListeners = new Set()
+let toastItems = []
+let toastSeq = 0
+function toastSubscribe(fn) { toastListeners.add(fn); return () => toastListeners.delete(fn) }
+function toastPush(text, kind = 'ok') {
+  const item = { id: ++toastSeq, text, kind }
+  toastItems = [...toastItems, item]
+  toastListeners.forEach((fn) => fn())
+  setTimeout(() => {
+    toastItems = toastItems.filter((t) => t.id !== item.id)
+    toastListeners.forEach((fn) => fn())
+  }, 2400)
+}
+function ToastHost() {
+  const items = useSyncExternalStore(toastSubscribe, () => toastItems, () => toastItems)
+  return React.createElement('div', { className: 'duf-toast-host', role: 'status', 'aria-live': 'polite' },
+    items.map((t) => React.createElement('div', { key: t.id, className: 'duf-toast' + (t.kind === 'err' ? ' duf-toast-err' : '') }, t.text)))
+}
+
+/* 剪贴板：优先 async Clipboard API，回退 execCommand */
+async function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(text)
+    return
+  }
+  const ta = document.createElement('textarea')
+  ta.value = text
+  ta.style.cssText = 'position:fixed;opacity:0'
+  document.body.append(ta)
+  ta.select()
+  let ok = false
+  try { ok = document.execCommand('copy') } finally { ta.remove() }
+  if (!ok) throw new Error('clipboard unavailable')
+}
+
+/* ------------------------------------------------------------------ */
+/* 行操作菜单：PC 右键 / 触摸长按弹出                                      */
+/* ------------------------------------------------------------------ */
+
+const MENU_ITEMS = [
+  { id: 'mention', ico: '@', label: '提及文件' },
+  { id: 'open', ico: '↗', label: '打开文件' },
+  { id: 'copyName', ico: '📄', label: '复制文件名' },
+  { id: 'copyPath', ico: '📁', label: '复制完整路径' },
+  { id: 'sep' },
+  { id: 'delete', ico: '🗑️', label: '删除文件', danger: true },
+]
+
+function FileMenu({ x, y, entry, onAction, onClose }) {
+  const ref = useRef(null)
+  const [pos, setPos] = useState({ x, y })
+  // 首帧渲染后把菜单钳回视口内
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    let nx = x, ny = y
+    if (nx + r.width > window.innerWidth - 8) nx = window.innerWidth - r.width - 8
+    if (ny + r.height > window.innerHeight - 8) ny = window.innerHeight - r.height - 8
+    nx = Math.max(8, nx)
+    ny = Math.max(8, ny)
+    if (nx !== pos.x || ny !== pos.y) setPos({ x: nx, y: ny })
+  }, [x, y, pos])
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+  return React.createElement(React.Fragment, null,
+    React.createElement('div', { className: 'duf-menu-backdrop', onMouseDown: onClose }),
+    React.createElement('div', { ref, className: 'duf-menu', role: 'menu', style: { left: pos.x, top: pos.y } },
+      React.createElement('div', { className: 'duf-menu-title', title: entry.displayName }, entry.displayName),
+      MENU_ITEMS.map((it) => it.id === 'sep'
+        ? React.createElement('div', { key: 'sep', className: 'duf-menu-sep' })
+        : React.createElement('button', {
+            key: it.id, type: 'button', role: 'menuitem',
+            className: 'duf-menu-item' + (it.danger ? ' duf-menu-danger' : ''),
+            onClick: () => onAction(it.id, entry),
+          },
+            React.createElement('span', { className: 'duf-menu-ico' }, it.ico),
+            it.label))),
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /* core window: paperclip button + file library table                  */
 /* ------------------------------------------------------------------ */
 
@@ -533,12 +629,81 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
     queue.enqueue(sessionId, files)
   }, [queue, sessionId])
 
-  const insertReference = useCallback((displayName) => {
-    const marker = `@UPLOAD: ${displayName}`
-    const next = liveDraft.length > 0 ? `${liveDraft.replace(/\s*$/, '')}\n${marker}` : marker
-    inputActions?.setDraft?.(next)
-    closeWin()
-  }, [inputActions, liveDraft, closeWin])
+  /* ---------- 行操作菜单（PC 右键 / 触摸长按） ---------- */
+  const [menu, setMenu] = useState(null) // { x, y, entry }
+  const openMenu = useCallback((x, y, entry) => setMenu({ x, y, entry }), [])
+  const closeMenu = useCallback(() => setMenu(null), [])
+
+  // 触摸长按：480ms 未抬起且未移动 >12px → 弹菜单
+  const pressTimer = useRef(null)
+  const pressStart = useRef(null)
+  const lastTouchAt = useRef(0)
+  const cancelPress = useCallback(() => {
+    clearTimeout(pressTimer.current)
+    pressStart.current = null
+  }, [])
+  const startPress = useCallback((e, entry) => {
+    if (e.pointerType !== 'touch') return
+    lastTouchAt.current = Date.now()
+    cancelPress()
+    pressStart.current = { x: e.clientX, y: e.clientY }
+    pressTimer.current = setTimeout(() => {
+      cancelPress()
+      openMenu(e.clientX, e.clientY, entry)
+    }, 480)
+  }, [cancelPress, openMenu])
+  const movePress = useCallback((e) => {
+    const s = pressStart.current
+    if (!s) return
+    if (Math.hypot(e.clientX - s.x, e.clientY - s.y) > 12) cancelPress()
+  }, [cancelPress])
+  useEffect(() => cancelPress, [cancelPress])
+  // 行上右键：鼠标直接弹；触摸由长按定时器负责（忽略 1.2s 内浏览器补发的 contextmenu）
+  const rowContext = useCallback((e, entry) => {
+    e.preventDefault()
+    if (Date.now() - lastTouchAt.current < 1200) return
+    openMenu(e.clientX, e.clientY, entry)
+  }, [openMenu])
+
+  const onMenuAction = useCallback(async (id, entry) => {
+    closeMenu()
+    if (id === 'mention') {
+      const marker = `@UPLOAD: ${entry.displayName}`
+      const next = liveDraft.length > 0 ? `${liveDraft.replace(/\s*$/, '')}\n${marker}` : marker
+      inputActions?.setDraft?.(next)
+      toastPush(`已提及 ${entry.displayName}`)
+      return
+    }
+    if (id === 'open') {
+      try {
+        if (typeof openFile === 'function') await openFile(entry.absolutePath)
+        else await openWithSystem(entry.absolutePath)
+        toastPush(`已请求打开 ${entry.displayName}`)
+      } catch (e) {
+        toastPush(`打开失败：${e.message}`, 'err')
+      }
+      return
+    }
+    if (id === 'copyName' || id === 'copyPath') {
+      try {
+        await copyText(id === 'copyName' ? entry.displayName : entry.absolutePath)
+        toastPush(id === 'copyName' ? '已复制文件名' : '已复制完整路径')
+      } catch {
+        toastPush('复制失败：剪贴板不可用', 'err')
+      }
+      return
+    }
+    if (id === 'delete') {
+      if (!window.confirm(`删除 "${entry.name}"？该文件将从磁盘移除。`)) return
+      try {
+        await api.deleteAttachment(sessionId, entry.name)
+        toastPush(`已删除 ${entry.displayName}`)
+      } catch {
+        toastPush('删除失败', 'err')
+      }
+      setVersion((v) => v + 1)
+    }
+  }, [closeMenu, liveDraft, inputActions, openFile, api, sessionId])
 
   const iconFor = (entry) => {
     const [family] = specForName(entry.displayName)
@@ -570,7 +735,7 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
       ? React.createElement('div', {
           className: 'duf-lib-overlay', ref: overlayRef,
           onMouseDown: (e) => { if (e.target === overlayRef.current) closeWin() },
-          onKeyDown: (e) => { if (e.key === 'Escape') closeWin() },
+          onKeyDown: (e) => { if (e.key === 'Escape') { if (menu) closeMenu(); else closeWin() } },
           tabIndex: -1,
         },
           React.createElement('div', { className: 'duf-lib', role: 'dialog', 'aria-label': 'Workspace files' },
@@ -620,44 +785,31 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
                         React.createElement('colgroup', null,
                           React.createElement('col', { className: 'duf-col-icon' }),
                           React.createElement('col'),
-                          React.createElement('col', { className: 'duf-col-size' }),
-                          React.createElement('col', { className: 'duf-col-act' })),
+                          React.createElement('col', { className: 'duf-col-size' })),
                         React.createElement('tbody', null,
-                          attachments.map((entry) => React.createElement('tr', { key: entry.name },
+                          attachments.map((entry) => React.createElement('tr', {
+                            key: entry.name,
+                            className: 'duf-lib-row',
+                            onContextMenu: (e) => rowContext(e, entry),
+                            onPointerDown: (e) => startPress(e, entry),
+                            onPointerMove: movePress,
+                            onPointerUp: cancelPress,
+                            onPointerCancel: cancelPress,
+                            onPointerLeave: cancelPress,
+                          },
                             React.createElement('td', null, React.createElement('span', { className: 'duf-lib-icon' }, iconFor(entry))),
                             React.createElement('td', null,
                               React.createElement('span', { className: 'duf-lib-name', title: entry.displayName }, middleEllipsis(entry.displayName, 14, 26)),
                               React.createElement('span', { className: 'duf-lib-name-sub', title: entry.absolutePath }, middleEllipsis(entry.absolutePath, 10, 36))),
                             React.createElement('td', { className: 'duf-lib-size' }, formatSize(entry.size)),
-                            React.createElement('td', null,
-                              React.createElement('div', { className: 'duf-lib-actions' },
-                                React.createElement('button', {
-                                  className: 'duf-lib-btn', type: 'button', title: 'Insert path into composer',
-                                  onClick: () => insertReference(entry.displayName),
-                                }, '@'),
-                                React.createElement('button', {
-                                  className: 'duf-lib-btn', type: 'button', title: 'Open with default app',
-                                  onClick: async () => {
-                                    try {
-                                      if (typeof openFile === 'function') await openFile(entry.absolutePath)
-                                      else await openWithSystem(entry.absolutePath)
-                                    } catch (e) { window.alert(`Open failed: ${e.message}`) }
-                                  },
-                                }, '↗'),
-                                React.createElement('button', {
-                                  className: 'duf-lib-btn duf-lib-btn-danger', type: 'button', title: 'Delete file',
-                                  onClick: () => {
-                                    if (!window.confirm(`Delete "${entry.name}"? This removes the file from disk.`)) return
-                                    void api.deleteAttachment(sessionId, entry.name).catch(() => {}).finally(() => setVersion((v) => v + 1))
-                                  },
-                                }, '🗑️'),
-                              )),
                           )),
                         ),
                       )
                     : null,
             ),
           ),
+          menu ? React.createElement(FileMenu, { x: menu.x, y: menu.y, entry: menu.entry, onAction: onMenuAction, onClose: closeMenu }) : null,
+          React.createElement(ToastHost),
         )
       : null,
   )
