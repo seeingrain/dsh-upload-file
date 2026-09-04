@@ -170,33 +170,18 @@ function specForName(name) {
 
 function VideoThumb({ src, alt }) {
   const [poster, setPoster] = useState('')
+  const [failed, setFailed] = useState(false)
+  const ref = useRef(null)
   useEffect(() => {
-    let cancelled = false
+    setFailed(false)
+    const v = ref.current
+    if (!v) return
     let timer = null
-    let onFrame = () => {}
-    const v = document.createElement('video')
-    v.preload = 'auto'
-    v.muted = true
-    v.playsInline = true
-    // 必须挂在 DOM 里：移动端（iOS/Android）对脱离文档的 video 不解码帧，
-    // canvas 只能抓到透明帧 → 缩略图空白（PC 无此限制）。
-    v.style.cssText = 'position:fixed;left:-10000px;top:0;width:160px;height:96px;opacity:0;pointer-events:none'
-    document.body.appendChild(v)
-    v.src = src
-    const finish = () => {
-      cancelled = true
-      if (timer) clearTimeout(timer)
-      v.onloadedmetadata = null
-      v.onseeked = null
-      v.onerror = null
-      v.removeEventListener('timeupdate', onFrame)
-      try { v.pause() } catch { /* ignore */ }
-      v.removeAttribute('src')
-      v.load()
-      if (v.parentNode) v.parentNode.removeChild(v)
-    }
-    const draw = () => {
-      if (cancelled || v.videoWidth === 0) return
+    let done = false
+    // 抓当前帧：可见 video 是唯一的采集源（移动浏览器只为可见、可播放的
+    // video 解码帧——屏外/离屏 video 在手机上永远抓不到帧）。
+    const grab = () => {
+      if (done || !v || v.videoWidth === 0) return
       try {
         const c = document.createElement('canvas')
         const W = 160, H = 96
@@ -207,37 +192,47 @@ function VideoThumb({ src, alt }) {
         const sw = W / scale, sh = H / scale
         const sx = (v.videoWidth - sw) / 2, sy = (v.videoHeight - sh) / 2
         ctx.drawImage(v, sx, sy, sw, sh, 0, 0, W, H)
-        // 透明帧 = 未解码（移动端）：不设 poster，保留 <video> 兜底，避免白图
+        // 透明帧 = 未解码：不设 poster，保留正在播放的 <video>（比白图强）
         const px = ctx.getImageData(W >> 1, H >> 1, 1, 1).data
         if (px[3] === 0) return
+        done = true
         setPoster(c.toDataURL('image/jpeg', 0.72))
-        finish()
       } catch { /* ignore */ }
     }
-    v.onloadedmetadata = () => {
+    const onMeta = () => {
+      // 跳到片头 5% 处（避开黑场），autoplay 会从这里继续播
       try { v.currentTime = Math.min(0.1, (v.duration || 1) * 0.05) } catch { /* ignore */ }
     }
-    v.onseeked = () => {
-      draw()
-      if (cancelled) return // 已抓到帧（桌面快路径），无需播放
-      // 移动端 muted+playsinline 允许自动播放：播一下强制解码出帧，再抓
-      const t = v.currentTime
-      onFrame = () => {
-        if (v.currentTime >= t - 0.05) {
-          v.removeEventListener('timeupdate', onFrame)
-          draw()
-        }
-      }
-      v.addEventListener('timeupdate', onFrame)
-      timer = setTimeout(() => { draw(); finish() }, 800)
-      const p = v.play()
-      if (p) p.catch(() => { /* 播放被拒：800ms 定时器兜底 */ })
+    const onSeeked = () => {
+      grab()
+      timer = setTimeout(grab, 1200)
     }
-    v.onerror = () => { /* 保持 <video> 兜底 */ }
-    return finish
-  }, [src])
+    const onTime = () => grab()
+    v.addEventListener('loadedmetadata', onMeta)
+    v.addEventListener('seeked', onSeeked)
+    v.addEventListener('timeupdate', onTime)
+    return () => {
+      if (timer) clearTimeout(timer)
+      v.removeEventListener('loadedmetadata', onMeta)
+      v.removeEventListener('seeked', onSeeked)
+      v.removeEventListener('timeupdate', onTime)
+    }
+  }, [src, failed])
   if (poster) return React.createElement('img', { src: poster, alt, style: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' } })
-  return React.createElement('video', { src, preload: 'metadata', muted: true, playsInline: true, 'aria-label': alt })
+  if (failed) return React.createElement(FileBadge, { name: alt, small: true })
+  // 可见 + 静音 + playsinline + 自动播放：移动端允许 muted inline autoplay，
+  // 浏览器必须解码渲染 → 抓到首帧后换成静态 img（零播放成本）
+  return React.createElement('video', {
+    ref,
+    src,
+    muted: true,
+    playsInline: true,
+    preload: 'auto',
+    autoPlay: true,
+    loop: true,
+    'aria-label': alt,
+    onError: () => setFailed(true),
+  })
 }
 
 function FileBadge({ name, small }) {

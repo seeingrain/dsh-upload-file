@@ -4,6 +4,18 @@ All notable changes to dsh-upload-file are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.8] - 2026-09-05
+
+### Fixed
+- Video thumbnails still blank on phones (the off-DOM/offscreen capture
+  approach does not work on mobile: browsers only decode frames of
+  visible, playable video). The visible thumbnail `<video>` itself is
+  now the capture source: muted + playsinline + autoplay (allowed on
+  mobile), first decoded frame is captured to a poster image. If
+  capture ever fails, the user sees the small muted looping preview
+  instead of a blank box; undecodable codecs fall back to the file
+  badge.
+
 ## [0.2.7] - 2026-09-05
 
 ### Added
