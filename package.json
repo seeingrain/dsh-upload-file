@@ -1,18 +1,18 @@
 {
   "name": "dsh-upload-file",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "Workspace file upload with a paperclip dock: upload multiple files into <workspace>/.uploaded_files/<sessionId>/ (per-session isolation), and insert @UPLOAD: references into the composer.",
   "author": "seeingrain",
   "type": "module",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://git.6.seeingrain.fun:6443/dsh/dsh-upload-file.git"
+    "url": "https://github.com/seeingrain/dsh-upload-file.git"
   },
   "bugs": {
-    "url": "https://git.6.seeingrain.fun:6443/dsh/dsh-upload-file/issues"
+    "url": "https://github.com/seeingrain/dsh-upload-file/issues"
   },
-  "homepage": "https://git.6.seeingrain.fun:6443/dsh/dsh-upload-file",
+  "homepage": "https://github.com/seeingrain/dsh-upload-file",
   "main": "./lib/index.js",
   "exports": {
     ".": "./lib/index.js",

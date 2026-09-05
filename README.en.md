@@ -1,6 +1,6 @@
 # dsh-upload-file
 
-[![CI](https://git.6.seeingrain.fun:6443/dsh/dsh-upload-file/actions/workflows/ci.yml/badge.svg)](https://git.6.seeingrain.fun:6443/dsh/dsh-upload-file/actions/workflows/ci.yml)
+[![CI](https://github.com/seeingrain/dsh-upload-file/actions/workflows/ci.yml/badge.svg)](https://github.com/seeingrain/dsh-upload-file/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > 🇨🇳 中文: [README.md](README.md)
@@ -9,7 +9,7 @@ Adds a **📎 file library** to DSH Web chat: upload files into the current sess
 
 | Library window (upload / list / row actions) | Composer entry (paperclip next to the plus button) |
 | :---: | :---: |
-| ![Library window](https://git.6.seeingrain.fun:6443/dsh/dsh-upload-file/media/branch/main/assets/preview-1-library.png) | ![Composer entry](https://git.6.seeingrain.fun:6443/dsh/dsh-upload-file/media/branch/main/assets/preview-2-composer.png) |
+| ![Library window](https://raw.githubusercontent.com/seeingrain/dsh-upload-file/main/assets/preview-1-library.png) | ![Composer entry](https://raw.githubusercontent.com/seeingrain/dsh-upload-file/main/assets/preview-2-composer.png) |
 
 ## Features
 
@@ -71,7 +71,7 @@ pnpm run build
 ## Install
 
 ```sh
-dsh plugin --profile web add https://git.6.seeingrain.fun:6443/dsh/dsh-upload-file
+dsh plugin --profile web add github:seeingrain/dsh-upload-file
 # the host half needs a web restart; the client half loads on next page refresh
 ```
 

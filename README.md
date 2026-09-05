@@ -1,6 +1,6 @@
 # dsh-upload-file
 
-[![CI](https://git.6.seeingrain.fun:6443/dsh/dsh-upload-file/actions/workflows/ci.yml/badge.svg)](https://git.6.seeingrain.fun:6443/dsh/dsh-upload-file/actions/workflows/ci.yml)
+[![CI](https://github.com/seeingrain/dsh-upload-file/actions/workflows/ci.yml/badge.svg)](https://github.com/seeingrain/dsh-upload-file/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > 🇬🇧 English: [README.en.md](README.en.md)
@@ -9,7 +9,7 @@
 
 | 文件库窗口（上传 / 列表 / 行内动作） | 输入区入口（加号旁的回形针） |
 | :---: | :---: |
-| ![文件库窗口](https://git.6.seeingrain.fun:6443/dsh/dsh-upload-file/media/branch/main/assets/preview-1-library.png) | ![输入区回形针入口](https://git.6.seeingrain.fun:6443/dsh/dsh-upload-file/media/branch/main/assets/preview-2-composer.png) |
+| ![文件库窗口](https://raw.githubusercontent.com/seeingrain/dsh-upload-file/main/assets/preview-1-library.png) | ![输入区回形针入口](https://raw.githubusercontent.com/seeingrain/dsh-upload-file/main/assets/preview-2-composer.png) |
 
 ## 功能
 
@@ -71,7 +71,7 @@ pnpm run build
 ## 安装
 
 ```sh
-dsh plugin --profile web add https://git.6.seeingrain.fun:6443/dsh/dsh-upload-file
+dsh plugin --profile web add github:seeingrain/dsh-upload-file
 # host 半边需要重启 web；client 半边下次刷新页面即加载
 ```
 
