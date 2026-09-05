@@ -5,7 +5,7 @@
 
 > 🇨🇳 中文: [README.md](README.md)
 
-Upload any file to DSH, isolated per workspace and per session. It adds a **📎 file library** to DSH Web chat: upload files into the current session's private directory, with one action per row — **@ reference for the model, ↗ open, 🗑️ delete**. After upload, an `@UPLOAD:` reference is inserted into the composer automatically, so the model never needs a path from you. Every session's files are isolated, and re-uploading a name auto-suffixes `_1`/`_2` instead of clobbering.
+Upload any file to DSH, isolated per workspace and per session. It adds a **📎 file library** to DSH Web chat: upload files into the current session's private directory, with one action per row — **@ reference for the model, ↗ open, 🗑️ delete**. After an upload the file is mentioned in the composer automatically, so the model never needs a path from you. Every session's files are isolated, and re-uploading a name auto-suffixes `_1`/`_2` instead of clobbering.
 
 | Library window (upload / list / row actions) | Right-click action menu (6 actions) |
 | :---: | :---: |
@@ -13,19 +13,18 @@ Upload any file to DSH, isolated per workspace and per session. It adds a **📎
 
 ## Features
 
-- **📎 File library** button in the composer toolbar (next to the plus button), with a badge showing this session's file count
-- Library window:
-  - **Upload**: file picker, multi-select in one go
-  - List: type icon (server-generated thumbnails for images / video / PDF — original for images, a 5%-mark frame for video, first page for PDF, all compressed to ≤10KB; a type badge for everything else) + name (up to two lines, ellipsis beyond) + size, newest upload on top; the full path is not shown — use the "Copy full path" menu action
-  - Row actions: **right-click** a row on desktop / **long-press** on touch to open the action menu
-- Action menu (6 items):
-  - **@ Mention**: inserts `@UPLOAD: <file>` into the composer (auto-inserted after upload completes)
-  - **↗ Open**: goes through DSH's unified `workspaces.openPath` funnel — Better Sidebar editor when installed, otherwise falls back to `xdg-open` (system default app)
-  - **Copy name** / **Copy full path**: to the clipboard (classic copy icon)
-  - **Re-download**: downloads the file to the browser again (classic download icon)
-  - **🗑️ Delete**: removes the file on disk after a native browser confirm (no recycle bin — use with care)
-- Every successful action shows a **toast** (red toast on failure)
-- Upload drafts while in flight (progress bar + percent)
+- A **📎** button in the composer toolbar (next to the plus button), badged with this session's file count — click to open this session's library
+- **Upload**: pick several files at once; a progress bar shows while uploading
+- **List**: one row per file — thumbnail (images / video / PDF) or type icon + name + size, newest on top
+- **@ mention**: refer to a file in the composer, so the model can use it directly without you reporting a path
+- **Right-click** a file (long-press on touch) for 6 actions:
+  - @ mention the file
+  - open with the system default app (Better Sidebar editor when installed)
+  - copy name / copy full path
+  - re-download a copy locally
+  - delete the file (really gone from disk after confirm — no recycle bin)
+- **Isolation**: each session has its own storage; re-uploading a name gets an auto number suffix, never clobbering
+- A toast on every successful action (red on failure)
 
 ## Storage (filesystem as registry, no JSON index)
 
