@@ -16,7 +16,7 @@ Adds a **📎 file library** to DSH Web chat: upload files into the current sess
 - **📎 File library** button in the composer toolbar (next to the plus button), with a badge showing this session's file count
 - Library window:
   - **Upload**: file picker, multi-select in one go
-  - List: type icon (live thumbnail for images, type badge for other files) + name (up to two lines, ellipsis beyond) + size, newest upload on top; the full path is not shown — use the "Copy full path" menu action
+  - List: type icon (server-generated thumbnails for images / video / PDF — original for images, a 5%-mark frame for video, first page for PDF, all compressed to ≤10KB; a type badge for everything else) + name (up to two lines, ellipsis beyond) + size, newest upload on top; the full path is not shown — use the "Copy full path" menu action
   - Row actions: **right-click** a row on desktop / **long-press** on touch to open the action menu
 - Action menu (5 items):
   - **@ Mention**: inserts `@UPLOAD: <file>` into the composer (auto-inserted after upload completes)
@@ -34,6 +34,15 @@ Adds a **📎 file library** to DSH Web chat: upload files into the current sess
 - Listing = `readdir` + `stat` (sorted by mtime descending — newest upload on top)
 - The system prompt injects the session's upload-directory convention per session (skipped when the directory is empty)
 
+## Thumbnails (server-side frame extraction: images / video / PDF)
+
+- Images (png/jpg/gif/webp/bmp/ico) use the original, video (mp4/webm/mov/mkv/avi) uses a frame at the 5% mark (skipping the black intro, capped at 60s), and PDF uses the first page; all are scaled to a 160px max dimension and JPEG-compressed with a quality ladder to **≤10KB**
+- Stored in the hidden subdirectory `.thumbs/<original-name>.jpg` inside the session directory; the listing endpoint skips dot-prefixed entries by design, so the library is never polluted
+- Original filenames are unique per session and never overwritten → a thumbnail, once generated, is final; responses carry an `immutable` long-lived cache
+- **Lazy generation + concurrency dedup**: a thumbnail is generated on first request (the upload commit also best-effort pre-generates it; a failure is harmless and the request path is the fallback); concurrent requests for the same file generate it exactly once
+- **Graceful degradation**: depends on system `ffmpeg` (images/video) and `pdftoppm` (PDF, poppler); if either is missing or fails, that file falls back to the original image (images) or a type badge (video/PDF) — uploads and the listing are unaffected
+- Office documents (docx/xlsx/pptx) are **reserved** in the generator registry (not generated today, fall back to a type badge); wiring up a LibreOffice headless PDF pipeline later activates them. SVG is vector and natively small, rendered by the browser, so it is not generated
+
 ## Security
 
 - SHA-256 verification for the whole upload (client-side digest, compared server-side at commit)
@@ -48,7 +57,8 @@ Adds a **📎 file library** to DSH Web chat: upload files into the current sess
 - `DELETE /uploads/<id>` cancel (an already-committed id returns 404; the client swallows it)
 - `GET /sessions/<sessionId>/attachments` directory listing
 - `GET /attachments/content?sessionId&name` download / open (traversal-safe)
-- `DELETE /sessions/<sessionId>/attachments?name=` delete a committed file
+- `GET /attachments/thumbnail?sessionId&name` server-side thumbnail (lazy generation, `image/jpeg` + `immutable` cache; unsupported types 404 and the client falls back)
+- `DELETE /sessions/<sessionId>/attachments?name=` delete a committed file (and its thumbnail)
 
 ## Build
 

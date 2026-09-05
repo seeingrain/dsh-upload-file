@@ -195,6 +195,16 @@ function FileBadge({ name, small }) {
   ))
 }
 
+/** 服务端缩略图：<img> 指向 thumbnail 路由；404/不支持/解码失败时渲染 fallback。 */
+function ThumbImg({ src, alt, fallback }) {
+  const [failed, setFailed] = useState(false)
+  if (failed) return typeof fallback === 'function' ? fallback() : (fallback ?? React.createElement(FileBadge, { name: alt, small: true }))
+  return React.createElement('img', {
+    src, alt, loading: 'lazy', draggable: false,
+    onError: () => setFailed(true),
+  })
+}
+
 /* ------------------------------------------------------------------ */
 /* upload API + queue                                                  */
 /* ------------------------------------------------------------------ */
@@ -268,6 +278,9 @@ class UploadApi {
   }
   contentUrl(sessionId, name) {
     return `${API}/attachments/content?sessionId=${encodeURIComponent(sessionId)}&name=${encodeURIComponent(name)}`
+  }
+  thumbUrl(sessionId, name) {
+    return `${API}/attachments/thumbnail?sessionId=${encodeURIComponent(sessionId)}&name=${encodeURIComponent(name)}`
   }
 }
 
@@ -727,10 +740,23 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
 
   const iconFor = (entry) => {
     const [family] = specForName(entry.displayName)
-    if (family === 'image') {
-      return React.createElement('img', { src: api.contentUrl(sessionId, entry.name), alt: entry.displayName, loading: 'lazy', draggable: false })
+    const name = entry.displayName
+    if (family === 'image' && !name.toLowerCase().endsWith('.svg')) {
+      // 位图：服务端缩略图（省流量+省解码）；生成失败回落原图
+      return React.createElement(ThumbImg, {
+        src: api.thumbUrl(sessionId, name), alt: name,
+        fallback: () => React.createElement('img', { src: api.contentUrl(sessionId, name), alt: name, loading: 'lazy', draggable: false }),
+      })
     }
-    return React.createElement(FileBadge, { name: entry.displayName, small: true })
+    if (family === 'image') {
+      // SVG 矢量：浏览器原生渲染、体积天然小，不生成
+      return React.createElement('img', { src: api.contentUrl(sessionId, name), alt: name, loading: 'lazy', draggable: false })
+    }
+    if (family === 'video' || family === 'pdf') {
+      // 服务端抽帧（视频 5% 处 / PDF 首页）；失败回落徽章
+      return React.createElement(ThumbImg, { src: api.thumbUrl(sessionId, name), alt: name })
+    }
+    return React.createElement(FileBadge, { name, small: true })
   }
 
   return React.createElement('span', { className: 'duf-paperclip-root', style: { position: 'relative', display: 'inline-flex' } },

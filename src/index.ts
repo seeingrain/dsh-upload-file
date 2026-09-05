@@ -16,6 +16,7 @@
  *   GET    /attachments/content?sessionId&name         (download / open)
  *   DELETE /sessions/<sessionId>/attachments?name=     (delete a committed upload)
  */
+import { execFile } from 'node:child_process'
 import { createHash, randomUUID } from 'node:crypto'
 import { createReadStream, createWriteStream, readdirSync } from 'node:fs'
 import { mkdir, rename, rm, stat, unlink } from 'node:fs/promises'
@@ -137,6 +138,135 @@ function mimeFor(ext) {
 }
 
 /* ------------------------------------------------------------------ */
+/* thumbnails（服务端抽帧：图片/视频/PDF → ≤10KB JPEG）                  */
+/*                                                                     */
+/* 存放：<sessionDir>/.thumbs/<原文件名>.jpg（隐藏目录，列表接口天然跳过） */
+/* 原文件名在会话内唯一且永不被覆盖 → 缩略图生成一次即终态，可永久缓存。   */
+/* docx/xlsx/pptx 等办公文档：注册表预留（null = 暂不生成，客户端回徽章）。 */
+/* ------------------------------------------------------------------ */
+
+const THUMBS_DIR_NAME = '.thumbs'
+const THUMB_MAX_BYTES = 10 * 1024
+const THUMB_MAX_DIM = 160 // 图标盒 44×36 CSS px，3x 屏 ≈132 物理 px，160 足够
+
+function runCmd(cmd, args, timeoutMs = 30000) {
+  return new Promise((resolve) => {
+    execFile(cmd, args, { timeout: timeoutMs }, (err) => resolve(err ? null : true))
+  })
+}
+
+/** 按扩展名判定可生成缩略图的家族；null = 不支持（客户端回落）。 */
+function thumbFamily(name) {
+  const ext = name.slice(name.lastIndexOf('.') + 1).toLowerCase()
+  if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'ico'].includes(ext)) return 'image'
+  if (['mp4', 'webm', 'mov', 'mkv', 'avi', 'm4v', 'ogv'].includes(ext)) return 'video'
+  if (ext === 'pdf') return 'pdf'
+  // svg：矢量图体积小、浏览器原生渲染 → 不生成
+  return null
+}
+
+/** 生成器注册表：family → 生成函数。null = 预留接口（暂不生成）。 */
+const THUMB_GENERATORS = {
+  image: genImageOrVideoThumb, // 位图/动图取首帧
+  video: genImageOrVideoThumb, // 视频 seek 到 5% 抽一帧
+  pdf: genPdfThumb,
+  // 办公文档预留——未来接 LibreOffice 无头转 PDF 链路后填入实现：
+  word: null,
+  excel: null,
+  powerpoint: null,
+}
+
+async function genImageOrVideoThumb(src, dst, thumbsDir, name) {
+  const seek = await videoSeekArgs(src)
+  const scaleFilter = `scale='if(gt(iw,ih),${THUMB_MAX_DIM},-2)':'if(gt(iw,ih),-2,${THUMB_MAX_DIM})'`
+  for (const q of [4, 6, 9, 13]) {
+    await runCmd('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', ...seek, '-i', src, '-frames:v', '1', '-vf', scaleFilter, '-q:v', String(q), dst])
+    let sz = 0
+    try { sz = (await stat(dst)).size } catch { /* 无输出 */ }
+    if (sz > 0 && (sz <= THUMB_MAX_BYTES || q === 13)) return true
+    await rm(dst, { force: true }).catch(() => {})
+  }
+  return false
+}
+
+/** 视频 seek 参数：5% 处（避开片头黑场），上限 60s；ffprobe 失败则不 seek。 */
+async function videoSeekArgs(src) {
+  try {
+    const out = await new Promise((resolve) => {
+      execFile('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', src], { timeout: 15000 }, (err, so) => resolve(err ? '' : so))
+    })
+    const dur = parseFloat(String(out).trim())
+    if (Number.isFinite(dur) && dur > 0) {
+      return ['-ss', String(Math.min(Math.max(dur * 0.05, 0.05), 60)).toFixed(2)]
+    }
+  } catch { /* ignore */ }
+  return []
+}
+
+async function genPdfThumb(src, dst, thumbsDir) {
+  const prefix = join(thumbsDir, `gen-${randomUUID()}`)
+  let last = null
+  try {
+    for (const q of [80, 65, 50, 35]) {
+      await runCmd('pdftoppm', ['-jpeg', '-jpegopt', `quality=${q}`, '-f', '1', '-l', '1', '-r', '25', src, prefix])
+      const base = prefix.split(sep).pop()
+      const files = readdirSyncSafe(thumbsDir).filter((f) => f.startsWith(`${base}-`))
+      if (files.length > 0) {
+        const p = join(thumbsDir, files[0])
+        let sz = 0
+        try { sz = (await stat(p)).size } catch { /* ignore */ }
+        if (sz > 0) {
+          last = p
+          if (sz <= THUMB_MAX_BYTES) break
+          await rm(p, { force: true }).catch(() => {})
+        }
+      }
+    }
+    if (!last) return false
+    await rename(last, dst)
+    // 清掉其余中间页产物（last 已 rename 到 dst，不再匹配前缀，不受影响）
+    const base = prefix.split(sep).pop()
+    for (const f of readdirSyncSafe(thumbsDir).filter((x) => x.startsWith(`${base}-`))) {
+      await rm(join(thumbsDir, f), { force: true }).catch(() => {})
+    }
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** 确保缩略图存在并返回其路径；不支持或失败返回 null。 */
+const thumbInFlight = new Map() // dstPath -> Promise<string|null>（并发去重）
+
+function ensureThumbnail(dir, name) {
+  const family = thumbFamily(name)
+  const gen = family ? THUMB_GENERATORS[family] : undefined
+  if (typeof gen !== 'function') return Promise.resolve(null)
+  const src = join(dir, name)
+  const thumbsDir = join(dir, THUMBS_DIR_NAME)
+  const dst = join(thumbsDir, `${name}.jpg`)
+  const work = async () => {
+    try {
+      const info = await stat(dst)
+      if (info.isFile() && info.size > 0) return dst // 命中缓存
+    } catch { /* 生成 */ }
+    await mkdir(thumbsDir, { recursive: true }).catch(() => {})
+    const ok = await gen(src, dst, thumbsDir, name)
+    if (!ok) {
+      await rm(dst, { force: true }).catch(() => {})
+      return null
+    }
+    return dst
+  }
+  let p = thumbInFlight.get(dst)
+  if (!p) {
+    p = work().catch(() => null).finally(() => thumbInFlight.delete(dst))
+    thumbInFlight.set(dst, p)
+  }
+  return p
+}
+
+/* ------------------------------------------------------------------ */
 /* router                                                              */
 /* ------------------------------------------------------------------ */
 
@@ -252,6 +382,8 @@ export function apply(context) {
       const finalPath = join(dir, fileName)
       await rename(upload.tmpPath, finalPath)
       pending.delete(commitMatch[1])
+      // 尽力预生成缩略图（不阻塞上传响应；失败无碍，取图时懒生成兜底）
+      void ensureThumbnail(dir, fileName).catch(() => {})
 
       return writeJson(res, 200, {
         name: fileName,
@@ -338,8 +470,42 @@ export function apply(context) {
       if (target !== dir && !target.startsWith(dir + sep)) {
         return writeError(res, 400, 'FILE_BAD_REQUEST', 'Path escapes the session upload directory.')
       }
-      await unlink(target).catch(() => {})
+      // 连带删除缩略图（若有）
+      await unlink(join(dir, THUMBS_DIR_NAME, `${name}.jpg`)).catch(() => {})
       return writeJson(res, 200, { ok: true, name })
+    }
+
+    /* ---- GET /attachments/thumbnail?sessionId&name（服务端缩略图，懒生成+永久缓存） ---- */
+    if (req.method === 'GET' && path === `${API_PREFIX}/attachments/thumbnail`) {
+      const sessionId = url.searchParams.get('sessionId') ?? ''
+      const name = url.searchParams.get('name') ?? ''
+      const workspace = resolveWorkspace(sessionId)
+      if (!workspace) {
+        return writeError(res, 404, 'FILE_SESSION_NOT_FOUND', 'Session workspace not found.')
+      }
+      if (!name) return writeError(res, 400, 'FILE_BAD_REQUEST', 'name is required.')
+      const dir = normalize(sessionUploadDir(workspace, sessionId))
+      const target = normalize(join(dir, name))
+      if (target !== dir && !target.startsWith(dir + sep)) {
+        return writeError(res, 400, 'FILE_BAD_REQUEST', 'Path escapes the session upload directory.')
+      }
+      try {
+        const info = await stat(target)
+        if (!info.isFile()) throw new Error('not a file')
+      } catch {
+        return writeError(res, 404, 'FILE_NOT_FOUND', 'Attachment file is missing on disk.')
+      }
+      const thumb = await ensureThumbnail(dir, name)
+      if (!thumb) {
+        return writeError(res, 404, 'FILE_THUMB_UNSUPPORTED', 'No thumbnail available for this file type.')
+      }
+      // 缩略图不可变（原文件永不被覆盖）→ 永久缓存
+      res.writeHead(200, {
+        'content-type': 'image/jpeg',
+        'cache-control': 'public, max-age=31536000, immutable',
+      })
+      pipeline(createReadStream(thumb), res).catch(() => { res.destroy() })
+      return
     }
 
     return writeError(res, 404, 'FILE_NOT_FOUND', 'Route not found.')

@@ -4,6 +4,30 @@ All notable changes to dsh-upload-file are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-09-05
+
+### Added
+- Server-side thumbnails for **images, video, and PDF** in the file library:
+  - images (png/jpg/gif/webp/bmp/ico) render the original, video
+    (mp4/webm/mov/mkv/avi) renders a frame at the 5% mark (skipping the black
+    intro, capped at 60s), and PDF renders the first page
+  - all scaled to a 160px max dimension and JPEG-compressed with a quality
+    ladder to **≤10KB**, served from `GET /attachments/thumbnail` with an
+    `immutable` long-lived cache
+  - stored in the hidden `.thumbs/<original-name>.jpg` subdirectory of the
+    session upload dir (the listing skips dot entries, so the library is
+    never polluted); deleted together with the file
+  - lazy generation on first request plus best-effort pre-generation at
+    upload commit, with per-file concurrency dedup
+  - **graceful degradation**: when `ffmpeg` (images/video) or `pdftoppm`
+    (PDF, poppler) is missing or a render fails, the row falls back to the
+    original image (images) or a type badge (video/PDF) — uploads and the
+    listing are unaffected
+- Office documents (docx/xlsx/pptx) are **reserved** in the thumbnail
+  generator registry (not generated in this release, falling back to a type
+  badge); a future LibreOffice headless PDF pipeline can fill the slot. SVG
+  is vector and natively small, so it is not generated.
+
 ## [0.2.9] - 2026-09-05
 
 ### Removed
