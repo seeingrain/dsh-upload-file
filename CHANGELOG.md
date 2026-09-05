@@ -4,6 +4,13 @@ All notable changes to dsh-upload-file are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-09-05
+
+### Removed
+- The lazy auto-migration of legacy `uploaded_files/` directories, per
+  maintainer preference: existing directories were migrated manually (one-time
+  rename), and the code no longer references the old directory name at all
+
 ## [0.4.0] - 2026-09-05
 
 ### Added

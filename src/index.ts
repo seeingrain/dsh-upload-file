@@ -19,7 +19,7 @@
  */
 import { execFile } from 'node:child_process'
 import { createHash, randomUUID } from 'node:crypto'
-import { createReadStream, createWriteStream, existsSync, mkdirSync, readdirSync, renameSync } from 'node:fs'
+import { createReadStream, createWriteStream, readdirSync } from 'node:fs'
 import { mkdir, rename, rm, stat, unlink } from 'node:fs/promises'
 import { basename, join, normalize, sep } from 'node:path'
 import { pipeline } from 'node:stream/promises'
@@ -31,8 +31,6 @@ export const inject = ['agents', 'webServer', 'systemPrompt']
 const API_PREFIX = '/dsh-upload-file/v1'
 /** 隐藏目录：dot 前缀让目录不出现在文件管理器/备份工具的显眼位置 */
 const UPLOAD_DIR_NAME = '.uploaded_files'
-/** v0.4.0 之前的目录名，用于一次性迁移 */
-const LEGACY_UPLOAD_DIR_NAME = 'uploaded_files'
 const MAX_FILE_BYTES = 8 * 1024 * 1024 * 1024 // 8 GiB, aligned with local open-file limits
 /** Session ids arrive as `session-<uuid>` (persisted) or bare `<uuid>`; the
  *  `session-` prefix is part of the id, not a formatting artifact. */
@@ -42,20 +40,9 @@ const SESSION_ID_RE = /^(?:session-)?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f
 /* helpers                                                             */
 /* ------------------------------------------------------------------ */
 
-/** Per-session upload directory: <workspace>/.uploaded_files/<sessionId>.
- *  首次访问时若发现旧版 `uploaded_files/<sessionId>` 存在且新目录不存在，
- *  整体 rename 迁移（同分区原子操作）；新目录已存在则不合并，避免复杂化。 */
+/** Per-session upload directory: <workspace>/.uploaded_files/<sessionId> */
 function sessionUploadDir(workspace, sessionId) {
-  const ws = String(workspace)
-  const dir = join(ws, UPLOAD_DIR_NAME, String(sessionId))
-  try {
-    const legacy = join(ws, LEGACY_UPLOAD_DIR_NAME, String(sessionId))
-    if (existsSync(legacy) && !existsSync(dir)) {
-      mkdirSync(join(ws, UPLOAD_DIR_NAME), { recursive: true })
-      renameSync(legacy, dir)
-    }
-  } catch { /* 迁移失败不阻塞：新上传走新目录，旧目录留存 */ }
-  return dir
+  return join(String(workspace), UPLOAD_DIR_NAME, String(sessionId))
 }
 
 /** Sanitize a display name into a safe filesystem basename. */
