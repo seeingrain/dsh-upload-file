@@ -5,7 +5,7 @@
 
 > 🇨🇳 中文: [README.md](README.md)
 
-Upload any file to DSH, isolated per workspace and per session. It adds a **📎 file library** to DSH Web chat: upload files into the current session's private directory, with one action per row — **@ reference for the model, ↗ open, 🗑️ delete**. After an upload the file is mentioned in the composer automatically, so the model never needs a path from you. Every session's files are isolated, and re-uploading a name auto-suffixes `_1`/`_2` instead of clobbering.
+Upload any file to DSH — isolated per workspace and per session.
 
 | Library window (upload / list / row actions) | Right-click action menu (6 actions) |
 | :---: | :---: |
@@ -80,7 +80,7 @@ bundles list, then `pnpm install`.
 
 ## Best for
 
-**Users running DSH on a standalone server**: files uploaded through chat live on the server's disk — this plugin lets you inspect, manage and re-download them from the browser, no terminal or SSH required.
+**Users running DSH on a standalone server**: upload files straight from chat to the server, then @-reference them right away.
 
 ## License
 
