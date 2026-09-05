@@ -24,7 +24,6 @@ Upload any file to DSH — isolated per workspace and per session.
   - re-download a copy locally
   - delete the file (really gone from disk after confirm — no recycle bin)
 - **Isolation**: each session has its own storage; re-uploading a name gets an auto number suffix, never clobbering
-- A toast on every successful action (red on failure)
 
 ## Storage (filesystem as registry, no JSON index)
 

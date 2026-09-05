@@ -4,6 +4,12 @@ All notable changes to dsh-upload-file are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.10] - 2026-09-05
+
+### Changed
+- README: dropped the toast line from the features list — success
+  feedback is a baseline expectation of good software, not a feature.
+
 ## [0.4.9] - 2026-09-05
 
 ### Changed
