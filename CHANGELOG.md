@@ -4,6 +4,13 @@ All notable changes to dsh-upload-file are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.11] - 2026-09-05
+
+### Changed
+- README (zh/en): moved the "best for" line up — it now sits right
+  after the one-sentence core statement at the top, instead of a
+  section at the end.
+
 ## [0.4.10] - 2026-09-05
 
 ### Changed

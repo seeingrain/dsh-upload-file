@@ -7,6 +7,8 @@
 
 Upload any file to DSH — isolated per workspace and per session.
 
+**Best for**: users running DSH on a standalone server — upload files straight from chat to the server, then @-reference them right away.
+
 | Library window (upload / list / row actions) | Right-click action menu (6 actions) |
 | :---: | :---: |
 | ![Library window](https://raw.githubusercontent.com/seeingrain/dsh-upload-file/main/assets/cover-1-library.png) | ![Right-click action menu](https://raw.githubusercontent.com/seeingrain/dsh-upload-file/main/assets/cover-2-context-menu.png) |
@@ -76,10 +78,6 @@ dsh plugin --profile web add github:seeingrain/dsh-upload-file
 Local dev link: add `"dsh-upload-file": "link:<path to this repo>"` to
 `profiles/web/package.json` dependencies, append `dsh-upload-file` to the
 bundles list, then `pnpm install`.
-
-## Best for
-
-**Users running DSH on a standalone server**: upload files straight from chat to the server, then @-reference them right away.
 
 ## License
 

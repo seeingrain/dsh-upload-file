@@ -7,6 +7,8 @@
 
 这个插件允许你将任意文件上传给 DSH，并且是工作区+会话隔离的。
 
+**尤其适合**：DSH 运行在单独服务器上的用户——聊天里直接上传文件到服务器，后续直接 @ 引用。
+
 | 文件库弹层（上传 / 列表 / 行内动作） | 右键操作菜单（6 个动作） |
 | :---: | :---: |
 | ![文件库弹层](https://raw.githubusercontent.com/seeingrain/dsh-upload-file/main/assets/cover-1-library.png) | ![右键操作菜单](https://raw.githubusercontent.com/seeingrain/dsh-upload-file/main/assets/cover-2-context-menu.png) |
@@ -75,10 +77,6 @@ dsh plugin --profile web add github:seeingrain/dsh-upload-file
 
 本地开发链接方式：在 `profiles/web/package.json` 的 dependencies 里加
 `"dsh-upload-file": "link:<本仓库路径>"`，并在 bundles 列表追加 `dsh-upload-file`，然后 `pnpm install`。
-
-## 尤其适合
-
-**DSH 运行在单独服务器上的用户**：聊天里直接上传文件到服务器，后续直接 @ 引用。
 
 ## License
 
