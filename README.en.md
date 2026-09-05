@@ -16,7 +16,7 @@ Adds a **📎 file library** to DSH Web chat: upload files into the current sess
 - **📎 File library** button in the composer toolbar (next to the plus button), with a badge showing this session's file count
 - Library window:
   - **Upload**: file picker, multi-select in one go
-  - List: type icon (live thumbnails for images/video) + name (up to two lines, ellipsis beyond) + size, newest upload on top; the full path is not shown — use the "Copy full path" menu action
+  - List: type icon (live thumbnail for images, type badge for other files) + name (up to two lines, ellipsis beyond) + size, newest upload on top; the full path is not shown — use the "Copy full path" menu action
   - Row actions: **right-click** a row on desktop / **long-press** on touch to open the action menu
 - Action menu (5 items):
   - **@ Mention**: inserts `@UPLOAD: <file>` into the composer (auto-inserted after upload completes)

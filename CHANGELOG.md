@@ -4,6 +4,14 @@ All notable changes to dsh-upload-file are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.9] - 2026-09-05
+
+### Removed
+- Video thumbnails. The frame-capture approach proved unreliable on real
+  mobile browsers (blank on Android Edge even with a visible autoplaying
+  video) and added real complexity. Video files now show the same type
+  badge (MP4/WEBM/…) as other non-image files — simpler and consistent.
+
 ## [0.2.8] - 2026-09-05
 
 ### Fixed

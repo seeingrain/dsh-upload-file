@@ -68,7 +68,7 @@ div:has(+ div[data-slot="conversation.input.left"]){order:2}
 .duf-lib-row.duf-lib-new{background:#e6f4ea}
 .duf-lib-row.duf-lib-new:hover{background:#d7ebd9}
 .duf-lib-icon{display:inline-flex;align-items:center;justify-content:center;width:44px;height:36px;border-radius:6px;overflow:hidden;background:rgba(17,17,17,.05);flex:none}
-.duf-lib-icon img,.duf-lib-icon video{width:100%;height:100%;object-fit:cover;display:block;background:rgba(17,17,17,.05)}
+.duf-lib-icon img{width:100%;height:100%;object-fit:cover;display:block;background:rgba(17,17,17,.05)}
 /* 文件名最多两行，超出省略（路径行已移除，两行空间归文件名） */
 .duf-lib-name{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-weight:520;white-space:normal;word-break:break-word;overflow:hidden}
 .duf-lib-name-sub{display:block;color:rgba(17,17,17,.42);font-size:11px;margin-top:2px;white-space:nowrap;overflow:hidden}
@@ -166,73 +166,6 @@ function specForName(name) {
   const dot = base.lastIndexOf('.')
   if (dot <= 0 || dot === base.length - 1) return ['generic', 'FILE']
   return EXT_SPECS[base.slice(dot + 1).toLowerCase()] ?? ['generic', 'FILE']
-}
-
-function VideoThumb({ src, alt }) {
-  const [poster, setPoster] = useState('')
-  const [failed, setFailed] = useState(false)
-  const ref = useRef(null)
-  useEffect(() => {
-    setFailed(false)
-    const v = ref.current
-    if (!v) return
-    let timer = null
-    let done = false
-    // 抓当前帧：可见 video 是唯一的采集源（移动浏览器只为可见、可播放的
-    // video 解码帧——屏外/离屏 video 在手机上永远抓不到帧）。
-    const grab = () => {
-      if (done || !v || v.videoWidth === 0) return
-      try {
-        const c = document.createElement('canvas')
-        const W = 160, H = 96
-        c.width = W
-        c.height = H
-        const ctx = c.getContext('2d')
-        const scale = Math.max(W / v.videoWidth, H / v.videoHeight)
-        const sw = W / scale, sh = H / scale
-        const sx = (v.videoWidth - sw) / 2, sy = (v.videoHeight - sh) / 2
-        ctx.drawImage(v, sx, sy, sw, sh, 0, 0, W, H)
-        // 透明帧 = 未解码：不设 poster，保留正在播放的 <video>（比白图强）
-        const px = ctx.getImageData(W >> 1, H >> 1, 1, 1).data
-        if (px[3] === 0) return
-        done = true
-        setPoster(c.toDataURL('image/jpeg', 0.72))
-      } catch { /* ignore */ }
-    }
-    const onMeta = () => {
-      // 跳到片头 5% 处（避开黑场），autoplay 会从这里继续播
-      try { v.currentTime = Math.min(0.1, (v.duration || 1) * 0.05) } catch { /* ignore */ }
-    }
-    const onSeeked = () => {
-      grab()
-      timer = setTimeout(grab, 1200)
-    }
-    const onTime = () => grab()
-    v.addEventListener('loadedmetadata', onMeta)
-    v.addEventListener('seeked', onSeeked)
-    v.addEventListener('timeupdate', onTime)
-    return () => {
-      if (timer) clearTimeout(timer)
-      v.removeEventListener('loadedmetadata', onMeta)
-      v.removeEventListener('seeked', onSeeked)
-      v.removeEventListener('timeupdate', onTime)
-    }
-  }, [src, failed])
-  if (poster) return React.createElement('img', { src: poster, alt, style: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' } })
-  if (failed) return React.createElement(FileBadge, { name: alt, small: true })
-  // 可见 + 静音 + playsinline + 自动播放：移动端允许 muted inline autoplay，
-  // 浏览器必须解码渲染 → 抓到首帧后换成静态 img（零播放成本）
-  return React.createElement('video', {
-    ref,
-    src,
-    muted: true,
-    playsInline: true,
-    preload: 'auto',
-    autoPlay: true,
-    loop: true,
-    'aria-label': alt,
-    onError: () => setFailed(true),
-  })
 }
 
 function FileBadge({ name, small }) {
@@ -796,9 +729,6 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
     const [family] = specForName(entry.displayName)
     if (family === 'image') {
       return React.createElement('img', { src: api.contentUrl(sessionId, entry.name), alt: entry.displayName, loading: 'lazy', draggable: false })
-    }
-    if (family === 'video') {
-      return React.createElement(VideoThumb, { src: api.contentUrl(sessionId, entry.name), alt: entry.displayName })
     }
     return React.createElement(FileBadge, { name: entry.displayName, small: true })
   }
