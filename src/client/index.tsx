@@ -748,16 +748,14 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
       return
     }
     if (id === 'download') {
-      // 先确认再下载（同删除的时序）：toast 严格排在用户点完确认框之后
-      if (!window.confirm(`重新下载 "${entry.displayName}"？文件将保存到浏览器本地。`)) return
-      // 确认后才触发：同源 URL + download 属性 → 浏览器直接存盘（同名自动加 (1)）
+      // 直接触发，无确认框、无 toast：反馈交给浏览器自己的下载 UI
+      // （保存位置对话框 / 下载栏 / 通知）。同源 URL + download 属性 → 直接存盘（同名自动加 (1)）
       const a = document.createElement('a')
       a.href = api.contentUrl(sessionId, entry.name)
       a.download = entry.displayName
       document.body.appendChild(a)
       a.click()
       a.remove()
-      toastPush(`已开始下载 ${entry.displayName}`)
       return
     }
     if (id === 'delete') {

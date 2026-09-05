@@ -22,7 +22,7 @@ Adds a **📎 file library** to DSH Web chat: upload files into the current sess
   - **@ Mention**: inserts `@UPLOAD: <file>` into the composer (auto-inserted after upload completes)
   - **↗ Open**: goes through DSH's unified `workspaces.openPath` funnel — Better Sidebar editor when installed, otherwise falls back to `xdg-open` (system default app)
   - **Copy name** / **Copy full path**: to the clipboard (classic copy icon)
-  - **Re-download**: after a native browser confirm, downloads the file to the browser again (classic download icon)
+  - **Re-download**: downloads the file to the browser again (classic download icon)
   - **🗑️ Delete**: removes the file on disk after a native browser confirm (no recycle bin — use with care)
 - Every successful action shows a **toast** (red toast on failure)
 - Upload drafts while in flight (progress bar + percent)
