@@ -4,6 +4,16 @@ All notable changes to dsh-upload-file are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.7] - 2026-09-05
+
+### Enhanced
+- Storefront covers: two real screenshots (library window, right-click
+  action menu) replace the placeholder previews (`screenshots.json` +
+  README image table updated).
+- README now opens with the plain statement — "upload any file to DSH,
+  isolated per workspace and per session" — and closes with who it is
+  best for (DSH on a standalone server).
+
 ## [0.4.6] - 2026-09-05
 
 ### Enhanced

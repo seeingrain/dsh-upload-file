@@ -5,11 +5,11 @@
 
 > 🇬🇧 English: [README.en.md](README.en.md)
 
-给 DSH Web 聊天加一个 **📎 文件库**：把文件传进当前会话的私有目录，一行一个动作——**@  引用给模型、↗ 直接打开、🗑️ 删掉**。模型不用你再报路径，上传完自动在输入框插好 `@UPLOAD:` 引用；每个会话的文件互相隔离，重传同名文件自动加后缀，不会互相覆盖。
+这个插件允许你将任意文件上传给 DSH，并且是工作区+会话隔离的。它在聊天输入框加了一个 **📎 文件库**：把文件传进当前会话的私有目录，一行一个动作——**@  引用给模型、↗ 直接打开、🗑️ 删掉**。模型不用你再报路径，上传完自动在输入框插好 `@UPLOAD:` 引用；每个会话的文件互相隔离，重传同名文件自动加后缀，不会互相覆盖。
 
-| 文件库窗口（上传 / 列表 / 行内动作） | 输入区入口（加号旁的回形针） |
+| 文件库弹层（上传 / 列表 / 行内动作） | 右键操作菜单（6 个动作） |
 | :---: | :---: |
-| ![文件库窗口](https://raw.githubusercontent.com/seeingrain/dsh-upload-file/main/assets/preview-1-library.png) | ![输入区回形针入口](https://raw.githubusercontent.com/seeingrain/dsh-upload-file/main/assets/preview-2-composer.png) |
+| ![文件库弹层](https://raw.githubusercontent.com/seeingrain/dsh-upload-file/main/assets/cover-1-library.png) | ![右键操作菜单](https://raw.githubusercontent.com/seeingrain/dsh-upload-file/main/assets/cover-2-context-menu.png) |
 
 ## 功能
 
@@ -77,6 +77,10 @@ dsh plugin --profile web add github:seeingrain/dsh-upload-file
 
 本地开发链接方式：在 `profiles/web/package.json` 的 dependencies 里加
 `"dsh-upload-file": "link:<本仓库路径>"`，并在 bundles 列表追加 `dsh-upload-file`，然后 `pnpm install`。
+
+## 尤其适合
+
+**DSH 运行在单独服务器上的用户**：聊天里上传的文件存在服务器磁盘上，用这个插件在浏览器里直接查看、管理、重新下载，不用敲命令、不用 SSH。
 
 ## License
 

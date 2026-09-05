@@ -5,11 +5,11 @@
 
 > 🇨🇳 中文: [README.md](README.md)
 
-Adds a **📎 file library** to DSH Web chat: upload files into the current session's private directory, with one action per row — **@ reference for the model, ↗ open, 🗑️ delete**. After upload, an `@UPLOAD:` reference is inserted into the composer automatically, so the model never needs a path from you. Every session's files are isolated, and re-uploading a name auto-suffixes `_1`/`_2` instead of clobbering.
+Upload any file to DSH, isolated per workspace and per session. It adds a **📎 file library** to DSH Web chat: upload files into the current session's private directory, with one action per row — **@ reference for the model, ↗ open, 🗑️ delete**. After upload, an `@UPLOAD:` reference is inserted into the composer automatically, so the model never needs a path from you. Every session's files are isolated, and re-uploading a name auto-suffixes `_1`/`_2` instead of clobbering.
 
-| Library window (upload / list / row actions) | Composer entry (paperclip next to the plus button) |
+| Library window (upload / list / row actions) | Right-click action menu (6 actions) |
 | :---: | :---: |
-| ![Library window](https://raw.githubusercontent.com/seeingrain/dsh-upload-file/main/assets/preview-1-library.png) | ![Composer entry](https://raw.githubusercontent.com/seeingrain/dsh-upload-file/main/assets/preview-2-composer.png) |
+| ![Library window](https://raw.githubusercontent.com/seeingrain/dsh-upload-file/main/assets/cover-1-library.png) | ![Right-click action menu](https://raw.githubusercontent.com/seeingrain/dsh-upload-file/main/assets/cover-2-context-menu.png) |
 
 ## Features
 
@@ -78,6 +78,10 @@ dsh plugin --profile web add github:seeingrain/dsh-upload-file
 Local dev link: add `"dsh-upload-file": "link:<path to this repo>"` to
 `profiles/web/package.json` dependencies, append `dsh-upload-file` to the
 bundles list, then `pnpm install`.
+
+## Best for
+
+**Users running DSH on a standalone server**: files uploaded through chat live on the server's disk — this plugin lets you inspect, manage and re-download them from the browser, no terminal or SSH required.
 
 ## License
 
