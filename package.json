@@ -1,7 +1,7 @@
 {
   "name": "dsh-upload-file",
-  "version": "0.3.0",
-  "description": "Workspace file upload with a paperclip dock: upload multiple files into <workspace>/uploaded_files/<sessionId>/ (per-session isolation), and insert @UPLOAD: references into the composer.",
+  "version": "0.4.0",
+  "description": "Workspace file upload with a paperclip dock: upload multiple files into <workspace>/.uploaded_files/<sessionId>/ (per-session isolation), and insert @UPLOAD: references into the composer.",
   "author": "seeingrain",
   "type": "module",
   "license": "MIT",

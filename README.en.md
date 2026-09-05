@@ -18,17 +18,18 @@ Adds a **📎 file library** to DSH Web chat: upload files into the current sess
   - **Upload**: file picker, multi-select in one go
   - List: type icon (server-generated thumbnails for images / video / PDF — original for images, a 5%-mark frame for video, first page for PDF, all compressed to ≤10KB; a type badge for everything else) + name (up to two lines, ellipsis beyond) + size, newest upload on top; the full path is not shown — use the "Copy full path" menu action
   - Row actions: **right-click** a row on desktop / **long-press** on touch to open the action menu
-- Action menu (5 items):
+- Action menu (6 items):
   - **@ Mention**: inserts `@UPLOAD: <file>` into the composer (auto-inserted after upload completes)
   - **↗ Open**: goes through DSH's unified `workspaces.openPath` funnel — Better Sidebar editor when installed, otherwise falls back to `xdg-open` (system default app)
-  - **📄 Copy name** / **📁 Copy full path**: to the clipboard
+  - **Copy name** / **Copy full path**: to the clipboard (classic copy icon)
+  - **Re-download**: downloads the file to the browser again (classic download icon)
   - **🗑️ Delete**: removes the file on disk after a native browser confirm (no recycle bin — use with care)
 - Every successful action shows a **toast** (red toast on failure)
 - Upload drafts while in flight (progress bar + percent)
 
 ## Storage (filesystem as registry, no JSON index)
 
-- One subdirectory per session: `<workspace>/uploaded_files/<sessionId>/`
+- One subdirectory per session: `<workspace>/.uploaded_files/<sessionId>/` (hidden; the legacy `uploaded_files/` directory is auto-migrated on first access)
 - **The filename is the identity** (no displayName indirection); re-uploading the same name in one session gets an auto `_1`/`_2` suffix, and the `@UPLOAD:` reference always equals the actual file name on disk
 - Sessions are fully isolated: the same name in different sessions never conflicts
 - Listing = `readdir` + `stat` (sorted by mtime descending — newest upload on top)

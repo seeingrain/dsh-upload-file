@@ -79,6 +79,7 @@ div:has(+ div[data-slot="conversation.input.left"]){order:2}
 .duf-menu-item{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:0;background:transparent;border-radius:7px;font-size:13px;font-family:inherit;color:#111;cursor:pointer;text-align:left;white-space:nowrap}
 .duf-menu-item:hover{background:rgba(17,17,17,.06)}
 .duf-menu-ico{width:18px;text-align:center;font-size:14px;flex:none}
+.duf-menu-ico svg{display:block;margin:0 auto}
 .duf-menu-item.duf-menu-danger{color:#c2410c}
 .duf-menu-item.duf-menu-danger:hover{background:rgba(194,65,12,.08)}
 .duf-menu-sep{height:1px;margin:4px 6px;background:rgba(17,17,17,.09)}
@@ -497,11 +498,31 @@ async function copyText(text) {
 /* 行操作菜单：PC 右键 / 触摸长按弹出                                      */
 /* ------------------------------------------------------------------ */
 
+/** 经典「复制」图标（两个错叠圆角矩形，lucide copy 样式） */
+function strokeSvg(children) {
+  return React.createElement('svg', {
+    className: 'duf-menu-ico-svg', xmlns: 'http://www.w3.org/2000/svg', width: 15, height: 15,
+    viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2,
+    strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': 'true',
+  }, children)
+}
+const COPY_ICO = strokeSvg([
+  React.createElement('rect', { x: 9, y: 9, width: 13, height: 13, rx: 2, ry: 2 }),
+  React.createElement('path', { d: 'M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1' }),
+])
+/** 经典「下载」图标（向下箭头 + 托盘，lucide download 样式） */
+const DOWNLOAD_ICO = strokeSvg([
+  React.createElement('path', { d: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' }),
+  React.createElement('polyline', { points: '7 10 12 15 17 10' }),
+  React.createElement('line', { x1: 12, y1: 15, x2: 12, y2: 3 }),
+])
+
 const MENU_ITEMS = [
   { id: 'mention', ico: '@', label: '提及文件' },
   { id: 'open', ico: '↗', label: '打开文件' },
-  { id: 'copyName', ico: '📄', label: '复制文件名' },
-  { id: 'copyPath', ico: '📁', label: '复制完整路径' },
+  { id: 'copyName', ico: COPY_ICO, label: '复制文件名' },
+  { id: 'copyPath', ico: COPY_ICO, label: '复制完整路径' },
+  { id: 'download', ico: DOWNLOAD_ICO, label: '重新下载' },
   { id: 'sep' },
   { id: 'delete', ico: '🗑️', label: '删除文件', danger: true },
 ]
@@ -724,6 +745,17 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
       } catch {
         toastPush('复制失败：剪贴板不可用', 'err')
       }
+      return
+    }
+    if (id === 'download') {
+      // 重新下载到浏览器本地：同源 URL + download 属性 → 浏览器直接存盘（同名自动加 (1)）
+      const a = document.createElement('a')
+      a.href = api.contentUrl(sessionId, entry.name)
+      a.download = entry.displayName
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      toastPush(`已开始下载 ${entry.displayName}`)
       return
     }
     if (id === 'delete') {

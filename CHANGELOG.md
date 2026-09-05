@@ -4,6 +4,22 @@ All notable changes to dsh-upload-file are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-09-05
+
+### Added
+- **Re-download** action in the row menu (classic download icon): fetches the
+  file through the content route again and saves it to the browser locally
+  (same-name files get the browser's usual `(1)` suffix)
+- **Hidden upload root**: the per-workspace directory is now
+  `.uploaded_files/` (dot-prefixed, hidden in file managers). Legacy
+  `uploaded_files/<sessionId>/` directories are auto-migrated to the new
+  location on first access (atomic rename; files are never lost)
+
+### Changed
+- The row action menu now has 6 items (Re-download sits below Copy full path)
+- "Copy name" / "Copy full path" use the classic copy icon (two stacked
+  rounded rectangles) instead of the 📄 / 📁 emoji
+
 ## [0.3.0] - 2026-09-05
 
 ### Added
