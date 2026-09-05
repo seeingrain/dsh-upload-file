@@ -748,7 +748,9 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
       return
     }
     if (id === 'download') {
-      // 重新下载到浏览器本地：同源 URL + download 属性 → 浏览器直接存盘（同名自动加 (1)）
+      // 先确认再下载（同删除的时序）：toast 严格排在用户点完确认框之后
+      if (!window.confirm(`重新下载 "${entry.displayName}"？文件将保存到浏览器本地。`)) return
+      // 确认后才触发：同源 URL + download 属性 → 浏览器直接存盘（同名自动加 (1)）
       const a = document.createElement('a')
       a.href = api.contentUrl(sessionId, entry.name)
       a.download = entry.displayName
