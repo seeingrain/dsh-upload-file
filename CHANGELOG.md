@@ -4,6 +4,13 @@ All notable changes to dsh-upload-file are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.6] - 2026-09-05
+
+### Enhanced
+- Context menu now highlights its target row: while the row menu is
+  open, that file's row gets a darker background, making it explicit
+  which file the menu actions apply to (clears when the menu closes).
+
 ## [0.4.5] - 2026-09-05
 
 ### Fixed

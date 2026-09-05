@@ -67,6 +67,9 @@ div:has(+ div[data-slot="conversation.input.left"]){order:2}
 /* 本次开窗期间新上传的文件：浅绿底，关窗恢复 */
 .duf-lib-row.duf-lib-new{background:#e6f4ea}
 .duf-lib-row.duf-lib-new:hover{background:#d7ebd9}
+/* 行菜单打开期间：目标行深色底，标明后续操作作用于该文件 */
+.duf-lib-row.duf-lib-target{background:rgba(17,17,17,.10)}
+.duf-lib-row.duf-lib-target:hover{background:rgba(17,17,17,.13)}
 .duf-lib-icon{display:inline-flex;align-items:center;justify-content:center;width:44px;height:36px;border-radius:6px;overflow:hidden;background:rgba(17,17,17,.05);flex:none}
 .duf-lib-icon img{width:100%;height:100%;object-fit:cover;display:block;background:rgba(17,17,17,.05)}
 /* 文件名最多两行，超出省略（路径行已移除，两行空间归文件名） */
@@ -864,7 +867,7 @@ function FileLibraryWindow({ queue, sessionId, inputActions, useInput, openFile 
                         React.createElement('tbody', null,
                           attachments.map((entry) => React.createElement('tr', {
                             key: entry.name,
-                            className: 'duf-lib-row' + (newNames.has(entry.name) ? ' duf-lib-new' : ''),
+                            className: 'duf-lib-row' + (newNames.has(entry.name) ? ' duf-lib-new' : '') + (menu && menu.entry && menu.entry.name === entry.name ? ' duf-lib-target' : ''),
                             onContextMenu: (e) => rowContext(e, entry),
                             onPointerDown: (e) => startPress(e, entry),
                             onPointerMove: movePress,
