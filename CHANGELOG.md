@@ -4,6 +4,15 @@ All notable changes to dsh-upload-file are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.5] - 2026-09-05
+
+### Fixed
+- **Delete actually deletes now**: the delete route only removed the
+  thumbnail (the file `unlink` was accidentally dropped by the v0.3.0
+  thumbnail commit) and returned success — deleted files kept reappearing
+  in the list and stayed on disk. The file is now unlinked (a missing file
+  is an idempotent success; real errors return 500).
+
 ## [0.4.4] - 2026-09-05
 
 ### Added

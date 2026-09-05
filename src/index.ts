@@ -472,6 +472,10 @@ export function apply(context) {
       if (target !== dir && !target.startsWith(dir + sep)) {
         return writeError(res, 400, 'FILE_BAD_REQUEST', 'Path escapes the session upload directory.')
       }
+      // 删除文件本尊（ENOENT 视为幂等成功；其他错误上抛 → 500）
+      await unlink(target).catch((e) => {
+        if ((e as { code?: string })?.code !== 'ENOENT') throw e
+      })
       // 连带删除缩略图（若有）
       await unlink(join(dir, THUMBS_DIR_NAME, `${name}.jpg`)).catch(() => {})
       return writeJson(res, 200, { ok: true, name })
