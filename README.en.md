@@ -5,7 +5,7 @@
 
 > 🇨🇳 中文: [README.md](README.md)
 
-Upload any file to DSH — isolated per workspace and per session.
+Upload any file to DSH — uploaded files are isolated per workspace and per session.
 
 **Best for**: users running DSH on a standalone server — upload files straight from chat to the server, then @-reference them right away.
 

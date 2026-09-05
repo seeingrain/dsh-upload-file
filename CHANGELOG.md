@@ -4,6 +4,13 @@ All notable changes to dsh-upload-file are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.12] - 2026-09-05
+
+### Changed
+- README (zh/en): opening sentence clarified — it is the **uploaded
+  files** that are isolated per workspace + session, not the plugin
+  itself (boss wording, zh mirrored in en).
+
 ## [0.4.11] - 2026-09-05
 
 ### Changed
